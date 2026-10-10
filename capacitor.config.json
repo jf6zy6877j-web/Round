@@ -1,0 +1,10 @@
+{
+  "appId": "com.jafetsantana.round",
+  "appName": "ROUND",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#F6F1E4",
+    "scheme": "ROUND"
+  }
+}

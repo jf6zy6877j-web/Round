@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <rect width="1024" height="1024" fill="#14304F"/>
+  <circle cx="512" cy="512" r="330" fill="none" stroke="#F6F1E4" stroke-width="34"/>
+  <circle cx="512" cy="512" r="276" fill="none" stroke="#6FA8D6" stroke-width="10"/>
+  <text x="512" y="602" text-anchor="middle" font-family="Newsreader, Georgia, serif" font-size="400" font-weight="600" fill="#F6F1E4">R</text>
+  <path d="M366 700 H438 L462 660 L494 736 L524 684 L542 700 H658" fill="none" stroke="#6FA8D6" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
