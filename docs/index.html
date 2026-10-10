@@ -1,0 +1,2186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#F6F1E4">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ROUND">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>ROUND — Ronda Médica Diaria</title>
+<link rel="stylesheet" href="fonts.css">
+<style>
+:root{
+  --bg:#F6F1E4;
+  --surface:#FFFFFF;
+  --surface-alt:#ECE3CE;
+  --line:#DCD0B0;
+  --line-soft:#E9E0CB;
+  --ink:#14181F;
+  --ink-soft:#5B6472;
+  --ink-faint:#8B93A0;
+  --navy:#102A45;
+  --navy-2:#173A5E;
+  --blue:#2C6E93;
+  --blue-light:#9DC3D9;
+  --blue-pale:#E3EEF3;
+  --white:#FFFFFF;
+  --black:#0C0F13;
+  --radius-s:6px;
+  --radius-m:10px;
+  --radius-l:16px;
+  --font-display:'Newsreader', serif;
+  --font-mono:'IBM Plex Mono', monospace;
+  --font-body:'Inter', system-ui, -apple-system, sans-serif;
+  --shadow: 0 1px 2px rgba(16,42,69,0.06), 0 4px 14px rgba(16,42,69,0.05);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+::selection{background:var(--blue-light); color:var(--navy);}
+button{font-family:inherit; cursor:pointer;}
+input,textarea,select{font-family:inherit; font-size:14px;}
+::-webkit-scrollbar{width:8px; height:8px;}
+::-webkit-scrollbar-thumb{background:var(--line); border-radius:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+
+#app{max-width:1180px; margin:0 auto; padding:0 24px 80px;}
+@media (max-width:640px){ #app{padding:0 14px 60px;} }
+
+.storage-banner{
+  background:#3a2a12; color:#f5e6c8; font-size:12.5px; padding:9px 16px; text-align:center;
+}
+
+/* ---------- Header / Signos vitales ---------- */
+.header{ padding:28px 0 0; }
+.brand-row{ display:flex; align-items:baseline; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.brand{ display:flex; align-items:baseline; gap:10px; }
+.brand h1{
+  font-family:var(--font-display); font-weight:600; font-size:32px; letter-spacing:0.5px; margin:0; color:var(--navy);
+}
+.brand .tag{
+  font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--ink-faint);
+  border-left:1px solid var(--line); padding-left:10px;
+}
+.rank-chip{
+  display:flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--line);
+  border-radius:100px; padding:6px 14px 6px 6px; box-shadow:var(--shadow);
+}
+.rank-chip .badge-mini{width:26px; height:26px; flex:none;}
+.rank-chip .rt{font-family:var(--font-mono); font-size:11px; letter-spacing:0.5px; color:var(--ink-soft);}
+.rank-chip .rn{font-weight:600; font-size:13px; color:var(--navy); display:block;}
+
+.ecg-wrap{
+  margin-top:18px; position:relative; height:46px; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  overflow:hidden; background:linear-gradient(180deg, var(--surface), var(--bg));
+}
+.ecg-track{ position:absolute; top:0; left:0; height:100%; width:200%; display:flex; animation:ecgMove 7s linear infinite; }
+.ecg-track svg{height:100%; width:400px; flex:none; display:block;}
+@keyframes ecgMove{ from{transform:translateX(0);} to{transform:translateX(-400px);} }
+
+.vitals-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); }
+@media (max-width:720px){ .vitals-row{grid-template-columns:repeat(2,1fr);} }
+.vital{ background:var(--surface); padding:14px 16px; }
+.vital .vl{ font-family:var(--font-mono); font-size:10.5px; letter-spacing:1.2px; text-transform:uppercase; color:var(--ink-faint); }
+.vital .vv{ font-family:var(--font-mono); font-size:24px; font-weight:600; color:var(--navy); margin-top:2px; }
+.vital .vv span{font-size:13px; color:var(--ink-soft); font-weight:400;}
+
+/* ---------- Nav ---------- */
+.nav{ display:flex; gap:4px; margin-top:22px; border-bottom:1px solid var(--line); overflow-x:auto; }
+.nav button{
+  background:none; border:none; padding:12px 16px 13px; font-size:13.5px; font-weight:600; color:var(--ink-faint);
+  border-bottom:2px solid transparent; white-space:nowrap; transition:color .15s;
+}
+.nav button:hover{color:var(--navy);}
+.nav button.active{color:var(--navy); border-bottom-color:var(--blue);}
+
+.view{padding-top:26px; animation:fadeIn .25s ease;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+
+.section-title{ font-family:var(--font-display); font-size:20px; font-weight:600; color:var(--navy); margin:0 0 4px; }
+.section-sub{font-size:13px; color:var(--ink-soft); margin:0 0 18px;}
+.block{margin-bottom:34px;}
+.block-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; flex-wrap:wrap;}
+.block-head h2{font-family:var(--font-display); font-size:18px; color:var(--navy); margin:0;}
+.block-head p{font-size:12.5px; color:var(--ink-soft); margin:2px 0 0;}
+
+/* ---------- Cards / general ---------- */
+.card{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-m); box-shadow:var(--shadow); }
+.btn{
+  display:inline-flex; align-items:center; gap:6px; background:var(--navy); color:#fff; border:none;
+  padding:9px 16px; border-radius:100px; font-size:13px; font-weight:600; transition:background .15s, transform .1s;
+}
+.btn:hover{background:var(--navy-2);}
+.btn:active{transform:scale(0.97);}
+.btn.secondary{ background:var(--surface); color:var(--navy); border:1px solid var(--line); }
+.btn.secondary:hover{background:var(--surface-alt);}
+.btn.ghost{background:none; border:1px dashed var(--line); color:var(--ink-soft); font-weight:500;}
+.btn.ghost:hover{border-color:var(--blue); color:var(--blue);}
+.btn.danger{background:var(--surface); color:#7a2e2e; border:1px solid #e2cfc9;}
+.btn.sm{padding:6px 12px; font-size:12px;}
+.icon-btn{ background:none; border:none; color:var(--ink-faint); padding:4px 6px; border-radius:6px; font-size:13px; }
+.icon-btn:hover{background:var(--surface-alt); color:var(--navy);}
+
+input[type=text],input[type=date],input[type=number],input[type=time],textarea,select{
+  background:var(--bg); border:1px solid var(--line); border-radius:var(--radius-s); padding:9px 11px; color:var(--ink); width:100%;
+}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--blue-light); outline-offset:1px; border-color:var(--blue);}
+label.field{display:block; font-size:11.5px; font-weight:600; color:var(--ink-soft); letter-spacing:.3px; margin-bottom:5px; text-transform:uppercase;}
+.field-row{margin-bottom:14px;}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+@media (max-width:520px){.grid2{grid-template-columns:1fr;} .grid3{grid-template-columns:1fr 1fr;}}
+
+.empty{ text-align:center; padding:40px 20px; color:var(--ink-faint); border:1px dashed var(--line); border-radius:var(--radius-m); }
+.empty .et{font-family:var(--font-display); font-size:16px; color:var(--ink-soft); margin-bottom:4px;}
+
+/* ---------- Tablero (Materias) ---------- */
+.subject-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:14px; }
+.subject-card{ padding:18px; cursor:pointer; position:relative; overflow:hidden; transition:transform .15s, box-shadow .15s; }
+.subject-card:hover{transform:translateY(-2px); box-shadow:0 6px 18px rgba(16,42,69,0.1);}
+.subject-card .sc-tab{ position:absolute; top:0; left:0; height:5px; width:100%; }
+.subject-card h3{ font-family:var(--font-display); font-size:18px; margin:6px 0 2px; color:var(--navy); }
+.subject-card .sc-meta{font-size:12px; color:var(--ink-faint); font-family:var(--font-mono);}
+.progress-bar{height:5px; background:var(--surface-alt); border-radius:4px; margin-top:12px; overflow:hidden;}
+.progress-bar > div{height:100%; background:var(--blue); border-radius:4px;}
+.sc-stats{display:flex; justify-content:space-between; margin-top:10px; font-size:11.5px; color:var(--ink-soft);}
+.add-subject-card{
+  display:flex; align-items:center; justify-content:center; min-height:120px;
+  border:1.5px dashed var(--line); border-radius:var(--radius-m); color:var(--ink-faint); font-size:13px; font-weight:600; background:transparent;
+}
+.add-subject-card:hover{border-color:var(--blue); color:var(--blue);}
+
+/* ---------- Expediente detail ---------- */
+.detail-header{display:flex; align-items:center; gap:12px; margin-bottom:18px; flex-wrap:wrap;}
+.back-link{background:none; border:none; color:var(--ink-soft); font-size:13px; font-weight:600;}
+.back-link:hover{color:var(--navy);}
+.detail-title{font-family:var(--font-display); font-size:24px; color:var(--navy); margin:0;}
+.subtabs{display:flex; gap:6px; margin-bottom:16px; border-bottom:1px solid var(--line);}
+.subtabs button{background:none; border:none; padding:8px 4px; margin-right:18px; font-size:13px; font-weight:600; color:var(--ink-faint); border-bottom:2px solid transparent;}
+.subtabs button.active{color:var(--navy); border-bottom-color:var(--blue);}
+
+.task-row{
+  display:flex; align-items:flex-start; gap:12px; padding:13px 14px; border:1px solid var(--line);
+  border-radius:var(--radius-s); margin-bottom:8px; background:var(--surface);
+}
+.task-row.done{opacity:.5;}
+.task-check{
+  width:19px; height:19px; border-radius:50%; border:1.5px solid var(--blue); flex:none; margin-top:2px;
+  background:none; display:flex; align-items:center; justify-content:center; padding:0;
+}
+.task-check.checked{background:var(--blue);}
+.task-check.checked::after{content:'✓'; color:#fff; font-size:11px;}
+.task-main{flex:1; min-width:0;}
+.task-title{font-size:14px; font-weight:600; color:var(--ink); word-break:break-word;}
+.task-row.done .task-title{text-decoration:line-through;}
+.task-tags{display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; align-items:center;}
+.chip{
+  font-family:var(--font-mono); font-size:10.5px; letter-spacing:.4px; text-transform:uppercase;
+  padding:2px 7px; border-radius:4px; border:1px solid var(--line); color:var(--ink-soft);
+}
+.chip.type-lectura{background:var(--blue-pale); color:var(--blue); border-color:var(--blue-light);}
+.chip.type-practica{background:var(--surface-alt); color:var(--navy);}
+.chip.type-repaso{background:#fff; color:var(--ink-soft);}
+.chip.type-examen{background:var(--navy); color:#fff; border-color:var(--navy);}
+.chip.urgente{color:var(--black); border-color:var(--black); font-weight:700;}
+.task-date{font-family:var(--font-mono); font-size:11px; color:var(--ink-faint);}
+.task-sub{margin-left:31px; margin-top:6px; padding-left:12px; border-left:2px solid var(--line-soft);}
+.task-sub .task-row{padding:8px 10px;}
+.task-sub .task-title{font-size:13px; font-weight:500;}
+
+.note-item{ border:1px solid var(--line); border-radius:var(--radius-s); padding:14px; margin-bottom:10px; background:var(--surface); }
+.note-item h4{margin:0 0 4px; font-family:var(--font-display); font-size:15.5px; color:var(--navy);}
+.note-item .note-date{font-family:var(--font-mono); font-size:10.5px; color:var(--ink-faint); margin-bottom:8px; display:block;}
+.note-item p{margin:0; font-size:13.5px; color:var(--ink-soft); white-space:pre-wrap; line-height:1.5;}
+
+/* ---------- Ronda planificador ---------- */
+.split-preview{ margin-top:14px; padding:12px 14px; background:var(--blue-pale); border-radius:var(--radius-s); font-size:12.5px; color:var(--navy); }
+.split-preview ul{margin:6px 0 0; padding-left:18px;}
+.split-preview li{margin-bottom:3px; font-family:var(--font-mono); font-size:11.5px;}
+
+/* ---------- Guardia / Pomodoro ---------- */
+.pomo-wrap{display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start;}
+.pomo-clock-card{padding:34px; text-align:center; flex:1; min-width:280px;}
+.pomo-time{font-family:var(--font-mono); font-size:64px; font-weight:600; color:var(--navy); letter-spacing:1px;}
+.pomo-mode{font-family:var(--font-mono); font-size:12px; letter-spacing:2px; text-transform:uppercase; color:var(--blue); margin-bottom:6px;}
+.pomo-controls{display:flex; gap:10px; justify-content:center; margin-top:22px;}
+.pomo-side{flex:1; min-width:240px; display:flex; flex-direction:column; gap:14px;}
+.pomo-settings-card{padding:18px;}
+.pomo-settings-card h4{margin:0 0 12px; font-family:var(--font-display); font-size:16px; color:var(--navy);}
+.session-log{padding:16px 18px;}
+.session-log .sl-row{display:flex; justify-content:space-between; font-size:12.5px; padding:6px 0; border-bottom:1px solid var(--line-soft);}
+.session-log .sl-row:last-child{border-bottom:none;}
+
+/* ---------- Habitos ---------- */
+.habit-row{
+  display:flex; align-items:center; justify-content:space-between; gap:10px; padding:13px 16px; border:1px solid var(--line);
+  border-radius:var(--radius-s); margin-bottom:8px; background:var(--surface);
+}
+.habit-name{font-size:14px; font-weight:600;}
+.habit-streak{font-family:var(--font-mono); font-size:11px; color:var(--blue);}
+.habit-toggle{ width:36px; height:22px; border-radius:100px; border:1.5px solid var(--line); background:var(--surface-alt); position:relative; flex:none; }
+.habit-toggle .dot{
+  position:absolute; top:2px; left:2px; width:15px; height:15px; border-radius:50%; background:#fff; border:1.5px solid var(--line); transition:transform .15s;
+}
+.habit-toggle.on{background:var(--blue); border-color:var(--blue);}
+.habit-toggle.on .dot{transform:translateX(14px); border-color:var(--blue);}
+.week-strip{display:flex; gap:4px; margin-top:8px;}
+.week-strip div{width:16px; height:16px; border-radius:3px; background:var(--surface-alt); border:1px solid var(--line-soft);}
+.week-strip div.on{background:var(--blue); border-color:var(--blue);}
+
+/* ---------- Rango / Progreso ---------- */
+.rank-hero{padding:28px; text-align:center; margin-bottom:22px;}
+.rank-hero .badge-lg{width:88px; height:88px; margin:0 auto 12px;}
+.rank-hero .rh-name{font-family:var(--font-display); font-size:26px; color:var(--navy); font-weight:600;}
+.rank-hero .rh-sub{font-family:var(--font-mono); font-size:12px; color:var(--ink-soft); margin-top:4px;}
+.rank-progress{max-width:400px; margin:18px auto 0;}
+.rank-progress .rp-bar{height:8px; background:var(--surface-alt); border-radius:6px; overflow:hidden;}
+.rank-progress .rp-bar > div{height:100%; background:var(--blue);}
+.rank-progress .rp-label{font-family:var(--font-mono); font-size:11px; color:var(--ink-faint); margin-top:6px;}
+.rank-ladder{display:flex; flex-direction:column; gap:8px;}
+.rank-item{display:flex; align-items:center; gap:14px; padding:12px 16px; border:1px solid var(--line); border-radius:var(--radius-s); background:var(--surface);}
+.rank-item.locked{opacity:.42;}
+.rank-item.current{border-color:var(--blue); box-shadow:0 0 0 1px var(--blue) inset;}
+.rank-item .badge-sm{width:34px; height:34px; flex:none;}
+.rank-item .ri-name{font-weight:600; font-size:14px; color:var(--navy);}
+.rank-item .ri-range{font-family:var(--font-mono); font-size:11px; color:var(--ink-faint);}
+
+/* ---------- Pacientes ---------- */
+.patient-card{border:1px solid var(--line); border-radius:var(--radius-s); background:var(--surface); margin-bottom:10px; overflow:hidden;}
+.patient-head{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:13px 16px; cursor:pointer;}
+.patient-head:hover{background:var(--bg);}
+.patient-name{font-weight:700; font-size:14.5px; color:var(--navy);}
+.patient-room{font-family:var(--font-mono); font-size:11px; color:var(--ink-faint);}
+.patient-latest{font-family:var(--font-mono); font-size:11.5px; color:var(--ink-soft); margin-top:3px;}
+.patient-body{padding:0 16px 16px; border-top:1px solid var(--line-soft);}
+.vitals-table{width:100%; border-collapse:collapse; margin-top:10px; font-size:12px;}
+.vitals-table th{
+  font-family:var(--font-mono); font-size:9.5px; letter-spacing:.5px; text-transform:uppercase; color:var(--ink-faint);
+  text-align:left; padding:6px 6px; border-bottom:1px solid var(--line);
+}
+.vitals-table td{padding:7px 6px; border-bottom:1px solid var(--line-soft); font-family:var(--font-mono); color:var(--ink);}
+.vitals-table tr:last-child td{border-bottom:none;}
+.patient-actions{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;}
+.vitals-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+@media (max-width:480px){.vitals-grid{grid-template-columns:repeat(2,1fr);}}
+
+/* ---------- Tareas por hacer (quick) ---------- */
+.quick-add-row{display:flex; gap:8px; margin-bottom:12px;}
+.quick-add-row input{flex:1;}
+.quick-task{
+  display:flex; align-items:center; gap:12px; padding:11px 14px; border:1px solid var(--line);
+  border-radius:var(--radius-s); margin-bottom:7px; background:var(--surface);
+}
+.quick-task.done{opacity:.5;}
+.quick-task .qtt{flex:1; font-size:13.5px; font-weight:600;}
+.quick-task.done .qtt{text-decoration:line-through;}
+
+/* Modal */
+.overlay{ position:fixed; inset:0; background:rgba(16,24,33,0.4); display:flex; align-items:center; justify-content:center; z-index:50; padding:20px; }
+.modal{
+  background:var(--surface); border-radius:var(--radius-l); padding:26px; max-width:460px; width:100%;
+  box-shadow:0 20px 50px rgba(0,0,0,0.25); max-height:88vh; overflow-y:auto;
+}
+.modal h3{font-family:var(--font-display); margin:0 0 16px; color:var(--navy); font-size:19px;}
+.modal-actions{display:flex; gap:10px; margin-top:18px; justify-content:flex-end;}
+
+.color-dots{display:flex; gap:8px; margin-top:6px;}
+.color-dot{width:22px; height:22px; border-radius:50%; border:2px solid transparent; cursor:pointer;}
+.color-dot.selected{border-color:var(--ink);}
+
+.fab-row{display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap;}
+.checkbox-line{display:flex; align-items:center; gap:8px; font-size:13px; color:var(--ink-soft); margin-top:8px;}
+
+/* Toast */
+.toast{
+  position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--navy); color:#fff;
+  padding:10px 18px; border-radius:100px; font-size:12.5px; font-weight:600; box-shadow:0 8px 24px rgba(0,0,0,0.25);
+  opacity:0; transition:opacity .2s, transform .2s; z-index:100; pointer-events:none;
+}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+/* ===== Novedades: celebraciones, perla, interconsulta ===== */
+.header-right{ display:flex; align-items:center; gap:10px; }
+.sound-toggle{ background:var(--surface); border:1px solid var(--line); border-radius:100px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; color:var(--ink-soft); flex:none; }
+.sound-toggle:hover{ border-color:var(--blue); color:var(--blue); }
+
+.confetti-layer{ position:fixed; inset:0; pointer-events:none; z-index:300; overflow:hidden; }
+.confetti-piece{ position:absolute; width:7px; height:10px; border-radius:2px; opacity:0; animation:confettiFly .9s ease-out forwards; }
+@keyframes confettiFly{ 0%{transform:translate(0,0) rotate(0deg); opacity:1;} 100%{transform:translate(var(--dx), var(--dy)) rotate(280deg); opacity:0;} }
+
+.ecg-wrap.spike::after{ content:''; position:absolute; inset:0; background:var(--blue-light); opacity:0; animation:spikeFlash .55s ease; pointer-events:none; }
+@keyframes spikeFlash{ 0%{opacity:0;} 25%{opacity:.4;} 100%{opacity:0;} }
+
+.pearl-card{ display:flex; gap:12px; align-items:flex-start; padding:14px 16px; margin-bottom:26px; background:var(--surface-alt); border:1px solid var(--line); border-radius:var(--radius-m); }
+.pearl-card .pearl-mark{ font-family:var(--font-display); font-style:italic; font-size:30px; color:var(--blue); line-height:.9; flex:none; }
+.pearl-card .pearl-label{ font-family:var(--font-mono); font-size:9.5px; letter-spacing:1.2px; text-transform:uppercase; color:var(--ink-faint); display:block; margin-bottom:3px; }
+.pearl-card p{ margin:0; font-size:14px; color:var(--navy); line-height:1.5; font-family:var(--font-display); }
+
+.subject-card.discharged{ border-color:var(--blue); }
+.discharge-ribbon{ position:absolute; top:12px; right:-30px; background:var(--navy); color:#fff; font-family:var(--font-mono); font-size:9.5px; letter-spacing:1px; text-transform:uppercase; padding:3px 34px; transform:rotate(35deg); box-shadow:0 2px 6px rgba(0,0,0,0.2); }
+
+.rankup-modal{ text-align:center; }
+.rankup-modal .ru-eyebrow{ font-family:var(--font-mono); font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--blue); margin-bottom:10px; }
+.rankup-modal .ru-badge{ width:96px; height:96px; margin:0 auto 14px; animation:ruPop .5s cubic-bezier(.34,1.56,.64,1); }
+@keyframes ruPop{ 0%{transform:scale(0.3); opacity:0;} 70%{transform:scale(1.12); opacity:1;} 100%{transform:scale(1);} }
+.rankup-modal h3{ margin:0 0 4px; font-size:24px; }
+.rankup-modal .ru-tagline{ font-size:13.5px; color:var(--ink-soft); font-style:italic; margin:0 0 20px; }
+
+.flash-item{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; padding:13px 14px; border:1px solid var(--line); border-radius:var(--radius-s); margin-bottom:8px; background:var(--surface); }
+.flash-item .fi-front{ font-size:13.5px; font-weight:600; color:var(--navy); margin-bottom:3px; word-break:break-word; }
+.flash-item .fi-back{ font-size:12.5px; color:var(--ink-soft); word-break:break-word; }
+.review-stat{ font-family:var(--font-mono); font-size:11.5px; color:var(--blue); margin-left:auto; align-self:center; }
+.flip-card-wrap{ margin:6px auto 18px; }
+.flip-card{ position:relative; min-height:170px; border:1px solid var(--line); border-radius:var(--radius-m); background:var(--surface); display:flex; align-items:center; justify-content:center; padding:28px 22px; text-align:center; cursor:pointer; box-shadow:var(--shadow); }
+.flip-card .fc-label{ position:absolute; top:12px; left:14px; font-family:var(--font-mono); font-size:9.5px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-faint); }
+.flip-card .fc-text{ font-family:var(--font-display); font-size:18px; color:var(--navy); line-height:1.4; word-break:break-word; }
+.flip-card.flipped .fc-text{ color:var(--blue); }
+.review-progress{ text-align:center; font-family:var(--font-mono); font-size:11.5px; color:var(--ink-faint); margin-bottom:10px; }
+.review-controls{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+
+/* ===== Respaldo, privacidad, gráficas e Interconsulta espaciada ===== */
+.nudge{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:12px 14px; margin-bottom:16px; background:var(--surface); border:1px solid var(--blue-light); border-left:4px solid var(--blue); border-radius:var(--radius-s); font-size:13px; color:var(--navy); }
+.due-card{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:14px 16px; margin-bottom:16px; background:var(--blue-pale); border:1px solid var(--blue-light); border-radius:var(--radius-m); }
+.due-card .pearl-label{ font-family:var(--font-mono); font-size:9.5px; letter-spacing:1.2px; text-transform:uppercase; color:var(--ink-soft); display:block; margin-bottom:3px; }
+.due-card p{ margin:0; font-size:14px; color:var(--navy); }
+.due-chips{ display:flex; gap:8px; flex-wrap:wrap; }
+.chip.due-now{ background:var(--navy); color:#fff; border-color:var(--navy); }
+.backup-card{ padding:18px; margin-top:22px; }
+.backup-card .bc-title{ font-family:var(--font-display); font-size:18px; color:var(--navy); margin-bottom:6px; }
+.backup-card p{ margin:0 0 8px; font-size:13px; color:var(--ink-soft); line-height:1.5; }
+.backup-card .bc-meta{ font-family:var(--font-mono); font-size:11.5px; color:var(--blue); }
+.privacy-note{ margin:6px 0 0; font-size:12px; color:var(--ink-soft); line-height:1.45; padding-left:10px; border-left:2px solid var(--blue-light); }
+.privacy-warn{ margin:-4px 0 12px; padding:8px 10px; font-size:12px; line-height:1.4; color:var(--navy); background:var(--surface-alt); border:1px solid var(--line); border-radius:var(--radius-s); }
+.privacy-warn[hidden]{ display:none; }
+.abn{ font-weight:700; color:var(--black); white-space:nowrap; }
+.vt-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.vt-scroll .vitals-table th, .vt-scroll .vitals-table td{ white-space:nowrap; padding-right:12px; }
+.ref-note{ margin-top:8px; font-size:11px; color:var(--ink-faint); line-height:1.45; }
+.grade-btn{ flex-direction:column; gap:0; align-items:center; min-width:84px; padding:8px 14px; line-height:1.2; }
+.grade-btn small{ display:block; font-size:10.5px; font-weight:500; opacity:.75; }
+
+.vchart-wrap{ margin:14px 0 6px; padding:12px 12px 8px; border:1px solid var(--line-soft); border-radius:var(--radius-s); background:var(--surface); }
+.vc-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:8px; }
+.vc-title{ font-family:var(--font-display); font-size:15px; color:var(--navy); font-weight:600; }
+.vc-chips{ display:flex; gap:6px; flex-wrap:wrap; }
+.vc-chip{ background:none; border:1px solid var(--line); border-radius:100px; padding:3px 10px; font-family:var(--font-mono); font-size:11px; color:var(--ink-soft); }
+.vc-chip:hover{ border-color:var(--blue); color:var(--blue); }
+.vc-chip.active{ background:var(--navy); border-color:var(--navy); color:#fff; }
+.vc-empty{ padding:18px 6px; font-size:12.5px; color:var(--ink-faint); text-align:center; }
+.vc-legend{ display:flex; gap:14px; flex-wrap:wrap; margin-bottom:4px; font-size:11.5px; color:var(--ink-soft); }
+.vc-leg{ display:inline-flex; align-items:center; gap:6px; }
+.vc-key{ display:inline-block; width:14px; height:2px; border-radius:2px; vertical-align:middle; }
+.vc-swatch{ display:inline-block; width:14px; height:9px; background:var(--blue-pale); border:1px solid var(--blue-light); border-radius:2px; }
+.vc-plot{ position:relative; }
+.vc-plot svg{ display:block; width:100%; height:auto; overflow:visible; }
+.vc-grid{ stroke:var(--line-soft); stroke-width:1; }
+.vc-axis{ fill:var(--ink-faint); font-family:var(--font-mono); font-size:10px; }
+.vc-band{ fill:var(--blue-pale); opacity:.85; }
+.vc-line{ fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.vc-dot, .vc-hov{ stroke:var(--surface); stroke-width:2; }
+.vc-cross{ stroke:var(--ink-faint); stroke-width:1; }
+.vc-endlabel{ fill:var(--ink); font-family:var(--font-mono); font-size:10px; font-weight:600; }
+.vc-hit{ cursor:crosshair; outline:none; }
+.vc-hit:focus-visible{ stroke:var(--blue); stroke-width:1.5; }
+.vc-tip{ position:absolute; top:0; transform:translateX(-50%); display:none; min-width:110px; padding:8px 10px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-s); box-shadow:var(--shadow); pointer-events:none; z-index:5; }
+.vc-tip.show{ display:block; }
+.vc-tip.after{ transform:translateX(12px); }
+.vc-tip.before{ transform:translateX(calc(-100% - 12px)); }
+.vc-tip, .vc-tip *{ white-space:nowrap; }
+.vc-tip-head{ font-family:var(--font-mono); font-size:10.5px; color:var(--ink-faint); margin-bottom:4px; }
+.vc-tip-row{ display:flex; align-items:center; gap:7px; font-size:12px; }
+.vc-tip-row strong{ color:var(--ink); font-size:13px; }
+.vc-tip-name{ color:var(--ink-soft); }
+
+/* ===== Modo app nativa (iOS) ===== */
+html.native body{ padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom); padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right); -webkit-tap-highlight-color:transparent; -webkit-touch-callout:none; }
+html.native input, html.native textarea, html.native select{ font-size:16px; }
+html.native .toast{ bottom:calc(22px + env(safe-area-inset-bottom)); }
+.legal-card{ font-size:13px; line-height:1.5; color:var(--muted,#5b6773); }
+.legal-card b{ color:var(--navy,#14304f); }
+.legal-card a{ color:inherit; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ======================= PUENTE NATIVO (Capacitor) — opcional: en el navegador no hace nada ======================= */
+const PRIVACY_URL = 'https://jf6zy6877j-web.github.io/Round/privacy.html'; // pon aquí la URL pública de tu política de privacidad (ver LEEME)
+const Native = (function(){
+  const cap = window.Capacitor;
+  const isNative = !!(cap && typeof cap.isNativePlatform==='function' && cap.isNativePlatform());
+  const P = isNative ? (cap.Plugins||{}) : {};
+  const api = { isNative };
+  if(isNative) document.documentElement.classList.add('native');
+  let lastKey = null, askedPerm = false;
+  api.haptic = function(kind){
+    try{
+      if(!P.Haptics) return;
+      if(kind==='success') P.Haptics.notification({type:'SUCCESS'});
+      else P.Haptics.impact({style:'LIGHT'});
+    }catch(e){}
+  };
+  api.mirror = function(json){ try{ if(P.Preferences) P.Preferences.set({key:'round-data-v2', value:json}); }catch(e){} };
+  api.readMirror = async function(){ try{ if(!P.Preferences) return null; const r = await P.Preferences.get({key:'round-data-v2'}); return r && r.value || null; }catch(e){ return null; } };
+  // Aviso cuando termina la guardia/descanso aunque la app esté en segundo plano
+  api.syncPomo = async function(running, endsAt, mode){
+    if(!isNative || !P.LocalNotifications) return;
+    const key = running && endsAt ? mode+':'+endsAt : null;
+    if(key === lastKey) return;
+    lastKey = key;
+    const LN = P.LocalNotifications;
+    try{
+      await LN.cancel({notifications:[{id:1}]});
+      if(!key) return;
+      let perm = await LN.checkPermissions();
+      if(perm.display === 'prompt' || perm.display === 'prompt-with-rationale'){
+        if(askedPerm) return; askedPerm = true;
+        perm = await LN.requestPermissions();
+      }
+      if(perm.display !== 'granted') return;
+      if(lastKey !== key) return; // cambió mientras se pedía permiso
+      await LN.schedule({notifications:[{
+        id:1,
+        title: mode==='work' ? 'Guardia completada' : 'Descanso terminado',
+        body: mode==='work' ? 'Buen trabajo. Toca descanso.' : 'Vuelve a guardia cuando estés listo.',
+        schedule:{ at: new Date(endsAt) }
+      }]});
+    }catch(e){}
+  };
+  // Compartir / guardar la copia de seguridad con la hoja nativa de iOS
+  api.shareFile = async function(name, text){
+    if(!isNative || !P.Filesystem || !P.Share) return false;
+    try{
+      const f = await P.Filesystem.writeFile({path:name, data:text, directory:'CACHE', encoding:'utf8'});
+      await P.Share.share({title:'Copia de ROUND', url:f.uri, dialogTitle:'Guardar copia de ROUND'});
+      return true;
+    }catch(e){
+      if(e && /cancel/i.test(String(e.message||e))) return 'cancelled';
+      return false;
+    }
+  };
+  return api;
+})();
+
+/* ======================= STORAGE (localStorage — funciona standalone al abrir el archivo) ======================= */
+const STORAGE_KEY = 'round-data-v2';
+let storageBroken = false;
+
+function persistSave(){
+  try{
+    const json = JSON.stringify(state);
+    localStorage.setItem(STORAGE_KEY, json);
+    Native.mirror(json);
+    return true;
+  }catch(e){
+    console.error('No se pudo guardar en este navegador:', e);
+    storageBroken = true;
+    return false;
+  }
+}
+function persistLoad(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){
+    console.error('No se pudo leer almacenamiento local:', e);
+    storageBroken = true;
+  }
+  return null;
+}
+
+let saveTimer = null;
+function scheduleSave(showToast){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{
+    const ok = persistSave();
+    if(ok && showToast!==false) showToast_('Guardado');
+    if(!ok) showToast_('No se pudo guardar en este navegador', true);
+  }, 150);
+}
+
+function showToast_(msg, isError){
+  const t = document.getElementById('toast');
+  if(!t) return;
+  t.textContent = msg;
+  t.style.background = isError ? '#7a2e2e' : 'var(--navy)';
+  t.classList.add('show');
+  clearTimeout(t._hideTimer);
+  t._hideTimer = setTimeout(()=> t.classList.remove('show'), 1400);
+}
+
+/* ======================= DATA MODEL ======================= */
+const DEFAULT_SUBJECT_COLORS = ['#2C6E93','#173A5E','#8B93A0','#0C0F13','#5B6472'];
+
+// Interno requiere 20 tareas; cada rango siguiente sube de 10 en 10.
+const RANKS = [
+  {key:'interno', name:'Interno', min:0, ring:1, tagline:'Aprendiendo dónde queda cada servicio.'},
+  {key:'r1', name:'Residente R1', min:20, ring:2, tagline:'Ya pides interconsultas sin dudar.'},
+  {key:'r2', name:'Residente R2', min:30, ring:3, tagline:'Las guardias ya no te sorprenden.'},
+  {key:'r3', name:'Residente R3', min:40, ring:4, tagline:'Los internos te hacen preguntas a ti.'},
+  {key:'jefe', name:'Jefe de Residentes', min:50, ring:5, tagline:'Organizas la ronda de todo el servicio.'},
+  {key:'adjunto', name:'Adjunto', min:60, ring:6, tagline:'Firmas las órdenes con seguridad.'},
+  {key:'catedratico', name:'Catedrático', min:70, ring:7, tagline:'Ahora otros estudian de tus apuntes.'},
+];
+
+const PEARLS = [
+  'El corazón adulto en reposo late unas 100,000 veces al día. Tu constancia al estudiar también debería tener ritmo.',
+  'Repasar a intervalos suele rendir más que estudiarlo todo la noche antes. Por eso ROUND sugiere repasos a +1, +3 y +7 días.',
+  'Intentar recordar sin mirar (flashcards, casos) suele fijar más que releer. Prueba la Interconsulta de tus materias.',
+  'El primer estetoscopio, de Laennec (1816), era un tubo de papel enrollado. Empieza simple y mejora con el tiempo.',
+  'Dormir ayuda a consolidar lo aprendido. Cuidar tu sueño también es estudiar.',
+  'Los descansos programados ayudan a sostener la atención. Respeta el descanso de tu Turno de Guardia.',
+  'Un Turno de Guardia completo es una consulta enfocada: un problema, toda tu atención.',
+  'Anota los pacientes que ves: los casos reales se recuerdan mejor que los datos sueltos.',
+  'TA, FC y SpO2 cuentan una historia cuando se miran en tendencia, no como un valor aislado. Registra cada ronda.',
+  'Estudiar con calma y con descansos rinde más que hacerlo en pánico la víspera del examen.',
+  'Cada rango se construye una tarea a la vez: hoy solo necesitas completar la siguiente.',
+  'Un repaso corto de lo más difícil antes de dormir puede ayudarte a retenerlo mejor.',
+];
+function dayOfYear(){ const n=new Date(); const st=new Date(n.getFullYear(),0,0); return Math.floor((n-st)/86400000); }
+function todaysPearl(){ return PEARLS[dayOfYear() % PEARLS.length]; }
+
+function defaultState(){
+  return {
+    subjects: [
+      {id: uid(), name:'Anatomía', color: DEFAULT_SUBJECT_COLORS[0], tasks:[], notes:[], flashcards:[]},
+      {id: uid(), name:'Fisiología', color: DEFAULT_SUBJECT_COLORS[1], tasks:[], notes:[], flashcards:[]},
+      {id: uid(), name:'Farmacología', color: DEFAULT_SUBJECT_COLORS[2], tasks:[], notes:[], flashcards:[]},
+      {id: uid(), name:'Semiología', color: DEFAULT_SUBJECT_COLORS[3], tasks:[], notes:[], flashcards:[]},
+    ],
+    habits: [
+      {id: uid(), name:'Repaso de flashcards', log:{}},
+      {id: uid(), name:'Dormir 7 horas', log:{}},
+      {id: uid(), name:'Hidratación', log:{}},
+      {id: uid(), name:'Ejercicio', log:{}},
+    ],
+    sessions: [],
+    completedTasksTotal: 0,
+    pomoSettings: {work:50, brk:10},
+    patients: [],      // registro de rondas — persistente, no forma parte del sistema de tareas/puntos
+    quickTasks: [],     // tareas por hacer sueltas — sí dan puntos al completarse
+    settings: {sound:true},
+    lastSeenRankIndex: 0,
+    lastBackup: null,
+    dischargedCelebrated: {}, // subjectId -> true cuando ya se celebró el "alta médica"
+    reviews: [],              // {id, subjectId, date, total, known} — sesiones de Interconsulta
+  };
+}
+
+function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
+function localDateStr(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function todayStr(){ return localDateStr(new Date()); }
+function addDays(dateStr, n){ const d = new Date(dateStr+'T00:00:00'); d.setDate(d.getDate()+n); return localDateStr(d); }
+function daysBetween(a, b){ return Math.round((new Date(b+'T00:00:00') - new Date(a+'T00:00:00'))/86400000); }
+function nowTime(){ const d=new Date(); return d.toTimeString().slice(0,5); }
+function fmtDate(d){ if(!d) return ''; const dt = new Date(d+'T00:00:00'); return dt.toLocaleDateString('es-ES',{day:'2-digit', month:'short'}); }
+
+/* ======================= SANEAMIENTO Y RESPALDO ======================= */
+/* Construye un estado limpio a partir de datos no confiables (copias importadas o localStorage).
+   Solo conserva campos conocidos con tipos válidos: evita que un archivo ajeno inyecte HTML. */
+function sanitizeState(raw){
+  const base = defaultState();
+  if(!raw || typeof raw !== 'object') return base;
+  const arr = v => Array.isArray(v) ? v.slice(0, 20000) : [];
+  const obj = v => (v && typeof v === 'object') ? v : {};
+  const str = (v, max) => String(v==null ? '' : v).slice(0, max || 500);
+  const cid = v => { const s = String(v==null ? '' : v).replace(/[^A-Za-z0-9_-]/g, '').slice(0, 40); return s || uid(); };
+  const cdate = v => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) ? v : null;
+  const ctime = v => (typeof v === 'string' && /^\d{1,2}:\d{2}$/.test(v)) ? v : '';
+  const cnum = (v, min, max, def) => { const n = Number(v); return isFinite(n) ? Math.min(max, Math.max(min, n)) : def; };
+  const cint = (v, min, max, def) => Math.round(cnum(v, min, max, def));
+  const ccolor = v => (typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v)) ? v : DEFAULT_SUBJECT_COLORS[0];
+  const TYPES = ['lectura','practica','repaso','examen'];
+
+  const out = {};
+  out.subjects = Array.isArray(raw.subjects) ? arr(raw.subjects).filter(x=>x && typeof x==='object').map(sj=>({
+    id: cid(sj.id), name: str(sj.name, 80) || 'Materia', color: ccolor(sj.color),
+    tasks: arr(sj.tasks).filter(t=>t && typeof t==='object').map(t=>{
+      const o = {id:cid(t.id), title:str(t.title,200), type: TYPES.includes(t.type)?t.type:'lectura', priority: t.priority==='urgente'?'urgente':'rutina',
+        dueDate:cdate(t.dueDate), done:!!t.done, completedDate:cdate(t.completedDate)};
+      if(t.parentId) o.parentId = cid(t.parentId);
+      return o;
+    }),
+    notes: arr(sj.notes).filter(n=>n && typeof n==='object').map(n=>({id:cid(n.id), title:str(n.title,200), content:str(n.content,5000), date:cdate(n.date)||todayStr()})),
+    flashcards: arr(sj.flashcards).filter(c=>c && typeof c==='object').map(c=>({
+      id:cid(c.id), front:str(c.front,500), back:str(c.back,1000),
+      known:cint(c.known,0,100000,0), missed:cint(c.missed,0,100000,0),
+      ease:cnum(c.ease,1.3,3.5,2.5), reps:cint(c.reps,0,1000,0), interval:cint(c.interval,0,3650,0),
+      due:cdate(c.due), lastReview:cdate(c.lastReview)
+    }))
+  })) : base.subjects;
+
+  out.habits = Array.isArray(raw.habits) ? arr(raw.habits).filter(x=>x && typeof x==='object').map(h=>{
+    const log = {}; const src = obj(h.log);
+    Object.keys(src).slice(0, 5000).forEach(k=>{ if(/^\d{4}-\d{2}-\d{2}$/.test(k) && src[k]) log[k] = true; });
+    return {id:cid(h.id), name:str(h.name,80)||'Hábito', log};
+  }) : base.habits;
+
+  out.sessions = arr(raw.sessions).filter(x=>x && typeof x==='object').map(x=>({id:cid(x.id), subjectId: x.subjectId ? cid(x.subjectId) : null, minutes:cnum(x.minutes,0,1000,0), date:cdate(x.date)||todayStr()}));
+  out.completedTasksTotal = cint(raw.completedTasksTotal, 0, 100000, 0);
+  const ps = obj(raw.pomoSettings);
+  out.pomoSettings = {work: cint(ps.work,5,180,50), brk: cint(ps.brk,1,60,10)};
+  out.patients = arr(raw.patients).filter(x=>x && typeof x==='object').map(p=>({
+    id:cid(p.id), name:str(p.name,80), room:str(p.room,80),
+    entries: arr(p.entries).filter(e=>e && typeof e==='object').map(e=>({
+      id:cid(e.id), date:cdate(e.date)||todayStr(), time:ctime(e.time),
+      TA:str(e.TA,20), FC:str(e.FC,20), FP:str(e.FP,20), FR:str(e.FR,20), T:str(e.T,20), SPO2:str(e.SPO2,20), DIURESIS:str(e.DIURESIS,20)
+    }))
+  }));
+  out.quickTasks = arr(raw.quickTasks).filter(x=>x && typeof x==='object').map(t=>({id:cid(t.id), title:str(t.title,200), done:!!t.done, completedDate:cdate(t.completedDate)}));
+  out.settings = {sound: (raw.settings && typeof raw.settings.sound === 'boolean') ? raw.settings.sound : true};
+  let ix = 0; for(let i=0;i<RANKS.length;i++){ if(out.completedTasksTotal >= RANKS[i].min) ix = i; }
+  out.lastSeenRankIndex = (typeof raw.lastSeenRankIndex === 'number' && raw.lastSeenRankIndex >= 0 && raw.lastSeenRankIndex < RANKS.length) ? Math.floor(raw.lastSeenRankIndex) : ix;
+  out.dischargedCelebrated = {};
+  Object.keys(obj(raw.dischargedCelebrated)).slice(0,5000).forEach(k=>{ out.dischargedCelebrated[cid(k)] = !!raw.dischargedCelebrated[k]; });
+  out.reviews = arr(raw.reviews).filter(x=>x && typeof x==='object').map(r=>({id:cid(r.id), subjectId:cid(r.subjectId), date:cdate(r.date)||todayStr(), total:cint(r.total,0,100000,0), known:cint(r.known,0,100000,0)}));
+  out.lastBackup = cdate(raw.lastBackup);
+  return out;
+}
+
+function backupPayload(){ return {app:'ROUND', version:2, exportedAt:new Date().toISOString(), data:state}; }
+
+async function downloadBackup(){
+  const prev = state.lastBackup;
+  state.lastBackup = todayStr();   // la copia exportada ya registra su propia fecha
+  if(Native.isNative){
+    const r = await Native.shareFile('round-copia-'+todayStr()+'.json', JSON.stringify(backupPayload(), null, 2));
+    if(r === true){ scheduleSave(false); render(); showToast_('Copia lista'); }
+    else { state.lastBackup = prev; if(r !== 'cancelled') showToast_('No se pudo exportar. Prueba "Copiar como texto".', true); }
+    return;
+  }
+  try{
+    const blob = new Blob([JSON.stringify(backupPayload(), null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'round-copia-'+todayStr()+'.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>{ try{ URL.revokeObjectURL(url); }catch(e){} }, 2000);
+    scheduleSave(false); render(); showToast_('Copia exportada');
+  }catch(e){
+    state.lastBackup = prev;
+    showToast_('No se pudo exportar. Prueba "Copiar como texto".', true);
+  }
+}
+
+function copyBackupText(){
+  const prev = state.lastBackup;
+  state.lastBackup = todayStr();
+  const text = JSON.stringify(backupPayload());
+  const done = ()=>{ scheduleSave(false); render(); showToast_('Copia copiada al portapapeles'); };
+  const fail = ()=>{ state.lastBackup = prev; showToast_('No se pudo copiar. Usa "Exportar copia".', true); };
+  const fallback = ()=>{
+    let ok = false;
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select(); ok = document.execCommand('copy'); ta.remove();
+    }catch(e){}
+    if(ok) done(); else fail();
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(done, fallback); } else { fallback(); }
+}
+
+function parseBackup(text){
+  text = String(text||'').trim();
+  if(!text) return {ok:false, error:'Pega el contenido de la copia o elige un archivo.'};
+  if(text.length > 20*1024*1024) return {ok:false, error:'El archivo es demasiado grande.'};
+  let parsed;
+  try{ parsed = JSON.parse(text); }catch(e){ return {ok:false, error:'No se pudo leer: el texto no es una copia válida de ROUND.'}; }
+  const data = (parsed && parsed.data && typeof parsed.data === 'object') ? parsed.data : parsed;
+  if(!data || typeof data !== 'object' || !Array.isArray(data.subjects)) return {ok:false, error:'Este archivo no parece una copia de ROUND.'};
+  return {ok:true, clean: sanitizeState(data)};
+}
+
+function applyImportedState(clean){
+  state = clean;
+  state.lastSeenRankIndex = currentRankIndex();
+  ui.openSubjectId = null; ui.expandedPatients = {}; ui.chartMetric = {}; ui.review = null;
+  clearInterval(ui.pomo.intervalId);
+  ui.pomo.running = false; ui.pomo.endsAt = null; ui.pomo.mode = 'work'; ui.pomo.remaining = state.pomoSettings.work*60;
+  scheduleSave(false);
+  showToast_('Copia importada');
+}
+
+function hasUserData(){
+  return state.completedTasksTotal > 0 || state.patients.length > 0 || state.quickTasks.length > 0
+    || state.subjects.some(sj=> sj.tasks.length || sj.notes.length || sj.flashcards.length);
+}
+function backupNudgeHTML(){
+  if(!hasUserData()) return '';
+  const days = state.lastBackup ? daysBetween(state.lastBackup, todayStr()) : null;
+  if(state.lastBackup && days < 7) return '';
+  const msg = state.lastBackup ? 'Hace '+days+' días que no haces una copia de seguridad.' : 'Aún no has hecho una copia de seguridad.';
+  return '<div class="nudge"><span>'+msg+' Tus datos solo viven en '+(Native.isNative?'este dispositivo':'este navegador')+'.</span><button class="btn sm" data-action="export-backup">Exportar copia</button></div>';
+}
+function dataCardHTML(){
+  const last = state.lastBackup ? 'Última copia: '+fmtDate(state.lastBackup)+(state.lastBackup===todayStr()?' (hoy)':'') : 'Aún no has hecho una copia.';
+  return `<div class="card backup-card">
+    <div class="bc-title">Tus datos</div>
+    <p>Todo se guarda solo en ${Native.isNative?'este dispositivo':'este navegador'}. Si borras la app${Native.isNative?'':' o los datos del navegador'} o cambias de dispositivo, se pierde. Exporta una copia para respaldarlo o pasarlo a otro equipo. La copia incluye tus pacientes: guárdala en un lugar seguro.</p>
+    <div class="bc-meta">${last}</div>
+    <div class="fab-row" style="margin:12px 0 0;">
+      <button class="btn" data-action="export-backup">Exportar copia</button>
+      <button class="btn secondary" data-action="copy-backup">Copiar como texto</button>
+      <button class="btn ghost" data-action="open-import">Importar copia</button>
+    </div>
+  </div>
+  <div class="card legal-card">
+    <div class="bc-title">Privacidad y aviso</div>
+    <p><b>Privacidad.</b> ROUND no tiene cuentas ni servidores: tus datos se quedan en este ${Native.isNative?'dispositivo':'navegador'}, no se envían a nadie y la app no usa rastreadores ni publicidad.${PRIVACY_URL?' <a href="'+PRIVACY_URL+'" target="_blank" rel="noopener">Política de privacidad completa</a>.':''}</p>
+    <p><b>Aviso médico.</b> ROUND es una herramienta de organización y estudio. No diagnostica, no da recomendaciones de tratamiento y no sustituye el juicio clínico ni la supervisión de tus profesores. Las marcas ↑/↓ de signos vitales son solo una referencia general para adultos. No registres nombres completos ni datos que identifiquen a un paciente.</p>
+  </div>`;
+}
+
+/* Privacidad: ¿el texto parece un nombre completo, cédula o correo? */
+function looksIdentifying(v){
+  v = String(v||'');
+  const words = v.trim().split(/\s+/).filter(w=> w.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/g,'').length >= 3);
+  if(words.length >= 2) return true;
+  if(/\d{6,}/.test(v.replace(/[\s.\-]/g,''))) return true;
+  if(v.indexOf('@') !== -1) return true;
+  return false;
+}
+
+let state = defaultState();
+(function initState(){
+  const parsed = persistLoad();
+  state = parsed ? sanitizeState(parsed) : defaultState();
+})();
+
+/* ======================= APP UI STATE ======================= */
+const ui = {
+  tab: 'dashboard',
+  openSubjectId: null,
+  subjectSubtab: 'tareas',
+  expandedPatients: {},
+  chartMetric: {},
+  pomo: { running:false, mode:'work', remaining: (state.pomoSettings?state.pomoSettings.work:50)*60, subjectId: null, intervalId:null, endsAt:null },
+  modal: null,
+};
+
+/* ======================= SONIDO / CONFETI / CELEBRACIONES ======================= */
+let audioCtx = null;
+let lastClick = {x: window.innerWidth/2, y: window.innerHeight/2};
+document.addEventListener('click', (e)=>{ lastClick = {x:e.clientX||window.innerWidth/2, y:e.clientY||window.innerHeight/2}; }, true);
+
+function getAudioCtx(){
+  if(!state.settings || !state.settings.sound) return null;
+  try{
+    if(!audioCtx){ const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return null; audioCtx = new AC(); }
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }catch(e){ return null; }
+}
+function playTone(freq, start, dur, type, peak){
+  const ctx = getAudioCtx(); if(!ctx) return;
+  try{
+    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.type = type || 'sine'; osc.frequency.value = freq;
+    osc.connect(gain); gain.connect(ctx.destination);
+    const t0 = ctx.currentTime + start;
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.linearRampToValueAtTime(peak || 0.06, t0 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.start(t0); osc.stop(t0 + dur + 0.03);
+  }catch(e){}
+}
+function playBeep(){ Native.haptic('light'); playTone(880, 0, 0.12, 'sine', 0.05); }
+function playChime(){ Native.haptic('success'); playTone(587.33, 0, 0.14, 'sine', 0.06); playTone(880, 0.12, 0.24, 'sine', 0.06); }
+function playFanfare(){ Native.haptic('success'); playTone(523.25, 0, 0.16, 'triangle', 0.07); playTone(659.25, 0.14, 0.16, 'triangle', 0.07); playTone(783.99, 0.28, 0.36, 'triangle', 0.08); }
+
+function confettiBurst(x, y){
+  try{
+    const colors = ['#2C6E93','#173A5E','#9DC3D9','#DCD0B0','#0C0F13'];
+    const layer = document.createElement('div');
+    layer.className = 'confetti-layer';
+    document.body.appendChild(layer);
+    for(let i=0;i<26;i++){
+      const p = document.createElement('span');
+      p.className = 'confetti-piece';
+      const ang = Math.random()*Math.PI*2, dist = 70 + Math.random()*150;
+      p.style.setProperty('--dx', (Math.cos(ang)*dist)+'px');
+      p.style.setProperty('--dy', (Math.sin(ang)*dist - 30)+'px');
+      p.style.background = colors[i % colors.length];
+      p.style.left = x+'px'; p.style.top = y+'px';
+      p.style.animationDelay = (Math.random()*0.08)+'s';
+      layer.appendChild(p);
+    }
+    setTimeout(()=> layer.remove(), 1500);
+  }catch(e){}
+}
+function triggerEcgSpike(){
+  const el = document.querySelector('.ecg-wrap');
+  if(el){ el.classList.add('spike'); setTimeout(()=>{ const e2=document.querySelector('.ecg-wrap'); if(e2) e2.classList.remove('spike'); }, 600); }
+}
+
+/* Rango: ¿subió de nivel? Mantiene lastSeenRankIndex sincronizado (también si baja). */
+function checkRankUp(){
+  const cur = currentRankIndex();
+  const last = state.lastSeenRankIndex;
+  state.lastSeenRankIndex = cur;
+  return cur > last ? cur : null;
+}
+/* Alta médica: materia con 3+ tareas al 100%. */
+function checkDischarge(subjectId){
+  const sj = getSubject(subjectId); if(!sj) return false;
+  const full = sj.tasks.length >= 3 && sj.tasks.every(t=>t.done);
+  if(full && !state.dischargedCelebrated[subjectId]){ state.dischargedCelebrated[subjectId] = true; return true; }
+  if(!full) state.dischargedCelebrated[subjectId] = false;
+  return false;
+}
+function isDischarged(sj){ return sj.tasks.length >= 3 && sj.tasks.every(t=>t.done); }
+
+/* Celebración tras completar una tarea. rankIdx: nuevo rango o null. */
+function celebrate(rankIdx, discharged, subjectName){
+  if(rankIdx !== null){
+    ui.modal = {type:'rankup', idx:rankIdx};
+  }
+  render();
+  triggerEcgSpike();
+  confettiBurst(lastClick.x, lastClick.y);
+  if(rankIdx !== null){ playFanfare(); }
+  else if(discharged){ playChime(); showToast_('Alta médica: '+subjectName+' al 100%'); }
+  else { playBeep(); }
+}
+
+/* ======================= RANK HELPERS ======================= */
+function currentRankIndex(){
+  let idx = 0;
+  for(let i=0;i<RANKS.length;i++){ if(state.completedTasksTotal >= RANKS[i].min) idx = i; }
+  return idx;
+}
+function badgeSVG(ringLevel, size, opts){
+  opts = opts || {};
+  const stroke = opts.mono ? '#8B93A0' : '#173A5E';
+  const fillRing = opts.mono ? '#DCD0B0' : '#2C6E93';
+  let rings = '';
+  for(let i=0;i<7;i++){
+    const r = 6 + i*3.6;
+    const active = i < ringLevel;
+    rings += '<circle cx="50" cy="50" r="'+r+'" fill="none" stroke="'+(active? fillRing : '#E9E0CB')+'" stroke-width="2.1" opacity="'+(active?1:0.5)+'"/>';
+  }
+  return '<svg viewBox="0 0 100 100" width="'+size+'" height="'+size+'"><circle cx="50" cy="50" r="4" fill="'+stroke+'"/>'+rings+'<path d="M50 30 v14 M43 37 h14" stroke="'+stroke+'" stroke-width="3" stroke-linecap="round"/></svg>';
+}
+
+/* ======================= TASK / SUBJECT HELPERS ======================= */
+function getSubject(id){ return state.subjects.find(s=>s.id===id); }
+function allTasksFlat(){
+  let arr = [];
+  state.subjects.forEach(s=> s.tasks.forEach(t=> arr.push(Object.assign({subjectId:s.id, subjectName:s.name, subjectColor:s.color}, t))));
+  return arr;
+}
+function subjectProgress(s){
+  if(!s.tasks.length) return 0;
+  const done = s.tasks.filter(t=>t.done).length;
+  return Math.round(done/s.tasks.length*100);
+}
+function minutesTodayTotal(){
+  const t = todayStr();
+  return state.sessions.filter(s=>s.date===t).reduce((a,s)=>a+s.minutes,0);
+}
+function tasksCompletedToday(){
+  const t = todayStr();
+  const subj = allTasksFlat().filter(x=>x.done && x.completedDate===t).length;
+  const quick = state.quickTasks.filter(x=>x.done && x.completedDate===t).length;
+  return subj + quick;
+}
+function streakDays(){
+  let streak = 0;
+  let d = new Date();
+  for(let i=0;i<365;i++){
+    const ds = localDateStr(d);
+    const hasActivity = allTasksFlat().some(x=>x.done && x.completedDate===ds) || state.sessions.some(s=>s.date===ds) || state.quickTasks.some(x=>x.done && x.completedDate===ds);
+    if(hasActivity){ streak++; d.setDate(d.getDate()-1); }
+    else if(ds===todayStr()){ d.setDate(d.getDate()-1); continue; }
+    else break;
+  }
+  return streak;
+}
+
+function markTaskComplete(subjectId, taskId, val){
+  const s = getSubject(subjectId);
+  const t = s.tasks.find(t=>t.id===taskId);
+  if(!t) return;
+  const wasDone = t.done;
+  t.done = val;
+  t.completedDate = val ? todayStr() : null;
+  if(val && !wasDone) state.completedTasksTotal++;
+  if(!val && wasDone) state.completedTasksTotal = Math.max(0, state.completedTasksTotal-1);
+  const rankIdx = checkRankUp();
+  const discharged = val && !wasDone ? checkDischarge(subjectId) : (checkDischarge(subjectId), false);
+  scheduleSave();
+  if(val && !wasDone) celebrate(rankIdx, discharged, s.name); else render();
+}
+
+function deleteTask(subjectId, taskId){
+  const s = getSubject(subjectId);
+  const toRemove = s.tasks.filter(t=>t.id===taskId || t.parentId===taskId);
+  toRemove.forEach(t=>{ if(t.done) state.completedTasksTotal = Math.max(0, state.completedTasksTotal-1); });
+  s.tasks = s.tasks.filter(t=>t.id!==taskId && t.parentId!==taskId);
+  checkRankUp(); checkDischarge(subjectId);
+  scheduleSave(); render();
+}
+
+/* ======================= QUICK TASKS ======================= */
+function toggleQuickTask(id, val){
+  const t = state.quickTasks.find(x=>x.id===id);
+  if(!t) return;
+  const wasDone = t.done;
+  t.done = val; t.completedDate = val ? todayStr() : null;
+  if(val && !wasDone) state.completedTasksTotal++;
+  if(!val && wasDone) state.completedTasksTotal = Math.max(0, state.completedTasksTotal-1);
+  const rankIdx = checkRankUp();
+  scheduleSave();
+  if(val && !wasDone) celebrate(rankIdx, false, ''); else render();
+}
+function deleteQuickTask(id){
+  const t = state.quickTasks.find(x=>x.id===id);
+  if(t && t.done) state.completedTasksTotal = Math.max(0, state.completedTasksTotal-1);
+  state.quickTasks = state.quickTasks.filter(x=>x.id!==id);
+  checkRankUp();
+  scheduleSave(); render();
+}
+
+/* ======================= PATIENTS ======================= */
+function getPatient(id){ return state.patients.find(p=>p.id===id); }
+
+/* ======================= RENDER ROOT ======================= */
+function render(){
+  const app = document.getElementById('app');
+  app.innerHTML = (storageBroken? '<div class="storage-banner">⚠ Este navegador no permite guardar datos permanentemente (ej. modo privado). Los datos se perderán al cerrar la pestaña.</div>' : '')
+    + headerHTML() + navHTML() + '<div class="view">'+viewHTML()+'</div>' + (ui.modal? modalHTML() : '');
+  bindEvents();
+}
+
+function headerHTML(){
+  const idx = currentRankIndex();
+  const rank = RANKS[idx];
+  return `
+  <div class="header">
+    <div class="brand-row">
+      <div class="brand">
+        <h1>ROUND</h1>
+        <span class="tag">Ronda médica diaria</span>
+      </div>
+      <div class="header-right">
+        <button class="sound-toggle" data-action="toggle-sound" title="${state.settings.sound?'Sonido activado':'Sonido desactivado'}" aria-label="Sonido">${soundIconSVG(state.settings.sound)}</button>
+        <div class="rank-chip">
+          <div class="badge-mini">${badgeSVG(rank.ring, 26)}</div>
+          <div>
+            <span class="rn">${rank.name}</span>
+            <span class="rt">${state.completedTasksTotal} tareas completadas</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ecg-wrap">
+      <div class="ecg-track">${ecgSVG()}${ecgSVG()}</div>
+    </div>
+    <div class="vitals-row">
+      <div class="vital"><div class="vl">Tiempo hoy</div><div class="vv">${minutesTodayTotal()}<span> min</span></div></div>
+      <div class="vital"><div class="vl">Tareas hoy</div><div class="vv">${tasksCompletedToday()}</div></div>
+      <div class="vital"><div class="vl">Racha</div><div class="vv">${streakDays()}<span> días</span></div></div>
+      <div class="vital"><div class="vl">Pendientes</div><div class="vv">${allTasksFlat().filter(t=>!t.done).length + state.quickTasks.filter(t=>!t.done).length}</div></div>
+    </div>
+  </div>`;
+}
+
+function soundIconSVG(on){
+  return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/>'
+    + (on ? '<path d="M15.5 8.5a5 5 0 010 7"/><path d="M19 5a10 10 0 010 14"/>' : '<path d="M22 9l-6 6M16 9l6 6"/>') + '</svg>';
+}
+function ecgSVG(){
+  return `<svg viewBox="0 0 400 46" preserveAspectRatio="none">
+    <polyline points="0,23 40,23 55,23 62,8 70,40 78,4 86,23 100,23 140,23 160,23 172,12 182,23 400,23"
+      fill="none" stroke="#9DC3D9" stroke-width="1.6"/>
+  </svg>`;
+}
+
+function navHTML(){
+  const tabs = [
+    ['dashboard','Signos vitales'],
+    ['tablero','Tablero'],
+    ['ronda','Ronda de estudio'],
+    ['guardia','Guardia · Pomodoro'],
+    ['habitos','Hábitos clínicos'],
+    ['progreso','Progreso'],
+  ];
+  return '<div class="nav">'+tabs.map(([k,l])=>'<button data-nav="'+k+'" class="'+(ui.tab===k?'active':'')+'">'+l+'</button>').join('')+'</div>';
+}
+
+function viewHTML(){
+  if(ui.tab==='dashboard') return dashboardView();
+  if(ui.tab==='tablero') return ui.openSubjectId ? subjectDetailView(ui.openSubjectId) : tableroView();
+  if(ui.tab==='ronda') return rondaView();
+  if(ui.tab==='guardia') return guardiaView();
+  if(ui.tab==='habitos') return habitosView();
+  if(ui.tab==='progreso') return progresoView();
+  return '';
+}
+
+/* ======================= DASHBOARD ======================= */
+function dashboardView(){
+  const pending = allTasksFlat().filter(t=>!t.done && !t.parentId)
+    .sort((a,b)=> (a.dueDate||'9999').localeCompare(b.dueDate||'9999')).slice(0,6);
+
+  return `
+  ${backupNudgeHTML()}${flashDueHTML()}
+  <div class="pearl-card">
+    <div class="pearl-mark">“</div>
+    <div><span class="pearl-label">Perla del día</span><p>${escapeHTML(todaysPearl())}</p></div>
+  </div>
+  <div class="block">
+    <div class="block-head">
+      <div><h2>Ronda de pacientes</h2><p>Registra pacientes y sus signos vitales: TA, FC, FP, FR, T, SpO2, Diuresis. Este registro es permanente y no se elimina como las tareas.</p><p class="privacy-note">Por privacidad, anota solo iniciales o un código (ej. "J.P." o "Cama 4"). No escribas nombres completos, cédula ni datos que identifiquen al paciente.</p></div>
+      <button class="btn" data-action="new-patient">+ Nuevo paciente</button>
+    </div>
+    ${state.patients.length? state.patients.map(p=>patientCardHTML(p)).join('') : `<div class="empty"><div class="et">Sin pacientes registrados</div>Agrega tu primer paciente para anotar su ronda de signos vitales.</div>`}
+  </div>
+
+  <div class="block">
+    <div class="block-head">
+      <div><h2>Tareas por hacer</h2><p>Pendientes sueltos — cada uno que completes suma puntos para subir de rango.</p></div>
+    </div>
+    <div class="card" style="padding:16px 18px;">
+      <div class="quick-add-row">
+        <input type="text" id="quick-task-input" placeholder="Ej: Entregar hoja de evolución...">
+        <button class="btn sm" data-action="add-quick-task">Agregar</button>
+      </div>
+      ${state.quickTasks.length? state.quickTasks.slice().sort((a,b)=> (a.done - b.done) || 0).map(t=>`
+        <div class="quick-task ${t.done?'done':''}">
+          <button class="task-check ${t.done?'checked':''}" data-action="toggle-quick" data-qid="${t.id}"></button>
+          <div class="qtt">${escapeHTML(t.title)}</div>
+          <button class="icon-btn" data-action="delete-quick" data-qid="${t.id}">✕</button>
+        </div>
+      `).join('') : `<div style="font-size:12.5px; color:var(--ink-faint); padding:6px 2px;">Sin tareas sueltas por ahora.</div>`}
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="block-head"><div><h2>Próximas en el tablero</h2><p>Órdenes médicas de tus materias, ordenadas por vencimiento.</p></div></div>
+    ${pending.length? pending.map(t=>taskRowHTML(t, t.subjectId, false, true)).join('') : `<div class="empty"><div class="et">Sin pendientes activos</div>Crea tareas desde el Tablero o la Ronda de estudio.</div>`}
+  </div>
+  `;
+}
+
+/* ======================= SIGNOS VITALES: rangos y tendencias ======================= */
+const VITAL_DEFS = {
+  TA:{label:'TA', unit:'mmHg'},
+  FC:{label:'FC', unit:'lpm', band:[60,100]},
+  FP:{label:'FP', unit:'lpm', band:[60,100]},
+  FR:{label:'FR', unit:'rpm', band:[12,20]},
+  T:{label:'T', unit:'°C', band:[36,37.9]},
+  SPO2:{label:'SpO2', unit:'%', band:[95,100]},
+  DIURESIS:{label:'Diuresis', unit:''}
+};
+const VITAL_ORDER = ['FC','TA','FP','FR','T','SPO2','DIURESIS'];
+const CHART_C1 = '#1F6FA8', CHART_C2 = '#B8860B';   // validados: contraste, daltonismo y separación
+
+function numVal(v){
+  if(v===undefined || v===null) return null;
+  const m = String(v).replace(',', '.').match(/-?\d+(\.\d+)?/);
+  return m ? parseFloat(m[0]) : null;
+}
+function parseTA(v){
+  const m = String(v||'').match(/(\d{2,3})\s*[\/\-]\s*(\d{2,3})/);
+  return m ? [parseInt(m[1],10), parseInt(m[2],10)] : null;
+}
+/* Rangos de referencia para adultos. Solo orientativo/educativo. */
+function vitalFlag(key, v){
+  if(v===undefined || v===null || v==='') return null;
+  if(key==='TA'){
+    const t = parseTA(v); if(!t) return null;
+    if(t[0] >= 140 || t[1] >= 90) return 'high';
+    if(t[0] < 90 || t[1] < 60) return 'low';
+    return null;
+  }
+  const def = VITAL_DEFS[key]; if(!def || !def.band) return null;
+  const n = numVal(v); if(n===null) return null;
+  if(key==='T' && n > 45) return null;       // probablemente °F: no se evalúa
+  if(key==='SPO2' && n > 100) return null;   // valor imposible
+  if(n > def.band[1]) return 'high';
+  if(n < def.band[0]) return 'low';
+  return null;
+}
+function fmtVital(key, v){
+  if(v===undefined || v===null || v==='') return '—';
+  const f = vitalFlag(key, v);
+  const txt = escapeHTML(v);
+  if(!f) return txt;
+  return '<span class="abn" title="'+(f==='high'?'Por encima':'Por debajo')+' del rango de referencia">'+(f==='high'?'↑ ':'↓ ')+txt+'</span>';
+}
+
+function niceTicks(lo, hi, n){
+  const span = (hi-lo) || 1;
+  const raw = span/n;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw/mag;
+  const step = (norm<=1 ? 1 : norm<=2 ? 2 : norm<=2.5 ? 2.5 : norm<=5 ? 5 : 10) * mag;
+  const out = [];
+  for(let v = Math.ceil(lo/step)*step; v <= hi + step*1e-6; v += step) out.push(Math.round(v/step*2)/2*step);
+  return out;
+}
+function fmtTick(v){
+  if(Math.abs(v) >= 1000) return (v/1000).toFixed(v%1000 ? 1 : 0) + 'K';
+  return String(Number(v.toFixed(1)));
+}
+function entryTime(e){
+  const t = new Date(e.date+'T'+String(e.time||'00:00').padStart(5,'0')).getTime();
+  return isFinite(t) ? t : NaN;
+}
+function whenLabel(e){ return fmtDate(e.date) + (e.time ? ' ' + e.time : ''); }
+
+function chartSectionHTML(p, entriesDesc){
+  const metric = ui.chartMetric[p.id] || 'FC';
+  const def = VITAL_DEFS[metric];
+  const chips = VITAL_ORDER.map(k=>'<button class="vc-chip '+(k===metric?'active':'')+'" data-action="chart-metric" data-pid="'+p.id+'" data-m="'+k+'">'+VITAL_DEFS[k].label+'</button>').join('');
+  const seriesDefs = metric==='TA'
+    ? [{name:'Sistólica', color:CHART_C1, get:e=>{ const t=parseTA(e.TA); return t?t[0]:null; }},
+       {name:'Diastólica', color:CHART_C2, get:e=>{ const t=parseTA(e.TA); return t?t[1]:null; }}]
+    : [{name:def.label, color:CHART_C1, get:e=>numVal(e[metric])}];
+  const rows = entriesDesc.slice().reverse()
+    .map(e=>({e, t:entryTime(e), v:seriesDefs.map(sd=>sd.get(e))}))
+    .filter(r=>r.v.some(x=>x!==null));
+  const body = rows.length < 2
+    ? '<div class="vc-empty">Registra al menos 2 mediciones de '+def.label+' para ver la tendencia.</div>'
+    : lineChartHTML(metric, def, seriesDefs, rows);
+  return '<div class="vchart-wrap"><div class="vc-head"><span class="vc-title">Tendencia</span><div class="vc-chips">'+chips+'</div></div>'+body+'</div>';
+}
+
+function lineChartHTML(metric, def, seriesDefs, rows){
+  const W=320, H=170, ml=34, mr=38, mt=12, mb=26;
+  const pw = W-ml-mr, ph = H-mt-mb;
+  const useTime = rows.every(r=>isFinite(r.t));
+  const tx = rows.map((r,i)=> useTime ? r.t : i);
+  const tmin = Math.min.apply(null, tx), tmax = Math.max.apply(null, tx);
+  const X = i => ml + (tmax===tmin ? pw/2 : (tx[i]-tmin)/(tmax-tmin)*pw);
+
+  const vals = []; rows.forEach(r=> r.v.forEach(x=>{ if(x!==null) vals.push(x); }));
+  let lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+  if(def.band){ lo = Math.min(lo, def.band[0]); hi = Math.max(hi, def.band[1]); }
+  if(hi===lo){ hi += 1; lo -= 1; }
+  const pad = (hi-lo)*0.12;
+  let y0 = lo-pad, y1 = hi+pad;
+  if(metric==='SPO2') y1 = Math.min(y1, 101);
+  const Y = v => mt + (1-(v-y0)/(y1-y0))*ph;
+  const clampY = y => Math.max(mt, Math.min(mt+ph, y));
+
+  let svg = '';
+  if(def.band){
+    const by1 = clampY(Y(def.band[1])), by2 = clampY(Y(def.band[0]));
+    svg += '<rect class="vc-band" x="'+ml+'" y="'+by1.toFixed(1)+'" width="'+pw+'" height="'+Math.max(0,by2-by1).toFixed(1)+'"/>';
+  }
+  niceTicks(y0, y1, 4).forEach(t=>{
+    const y = Y(t).toFixed(1);
+    svg += '<line class="vc-grid" x1="'+ml+'" x2="'+(W-mr)+'" y1="'+y+'" y2="'+y+'"/>';
+    svg += '<text class="vc-axis" x="'+(ml-6)+'" y="'+(Number(y)+3.5).toFixed(1)+'" text-anchor="end">'+fmtTick(t)+'</text>';
+  });
+  const first = rows[0].e, last = rows[rows.length-1].e;
+  const sameDay = first.date === last.date;
+  svg += '<text class="vc-axis" x="'+ml+'" y="'+(H-8)+'" text-anchor="start">'+escapeHTML(sameDay ? (first.time||fmtDate(first.date)) : fmtDate(first.date))+'</text>';
+  svg += '<text class="vc-axis" x="'+(W-mr)+'" y="'+(H-8)+'" text-anchor="end">'+escapeHTML(sameDay ? (last.time||fmtDate(last.date)) : fmtDate(last.date))+'</text>';
+
+  const ys = seriesDefs.map(()=>[]);
+  let lastLabelY = null;
+  seriesDefs.forEach((sd, si)=>{
+    let d = '', lastIdx = -1;
+    rows.forEach((r,i)=>{
+      const v = r.v[si];
+      if(v===null){ ys[si].push(null); return; }
+      const x = X(i), y = Y(v);
+      ys[si].push(Number(y.toFixed(1)));
+      d += (d?' L ':'M ') + x.toFixed(1) + ' ' + y.toFixed(1);
+      lastIdx = i;
+    });
+    svg += '<path class="vc-line" d="'+d+'" stroke="'+sd.color+'"/>';
+    rows.forEach((r,i)=>{
+      const v = r.v[si]; if(v===null) return;
+      if(rows.length <= 15 || i===lastIdx) svg += '<circle class="vc-dot" cx="'+X(i).toFixed(1)+'" cy="'+Y(v).toFixed(1)+'" r="4" fill="'+sd.color+'"/>';
+    });
+    if(lastIdx >= 0){
+      const ly = Y(rows[lastIdx].v[si]);
+      if(lastLabelY===null || Math.abs(ly-lastLabelY) >= 12){
+        svg += '<text class="vc-endlabel" x="'+(X(lastIdx)+8).toFixed(1)+'" y="'+(ly+3.5).toFixed(1)+'">'+escapeHTML(String(rows[lastIdx].v[si]))+'</text>';
+        lastLabelY = ly;
+      }
+    }
+  });
+  svg += '<line class="vc-cross" x1="0" x2="0" y1="'+mt+'" y2="'+(mt+ph)+'" style="display:none"/>';
+  seriesDefs.forEach(sd=>{ svg += '<circle class="vc-hov" r="5" fill="'+sd.color+'" cx="0" cy="0" style="display:none"/>'; });
+  svg += '<rect class="vc-hit" x="'+(ml-4)+'" y="'+mt+'" width="'+(pw+8)+'" height="'+ph+'" fill="transparent" tabindex="0" aria-label="Explorar mediciones: usa las flechas izquierda y derecha" style="touch-action:pan-y"/>';
+
+  const geo = {
+    W:W, xs: rows.map((r,i)=>Number(X(i).toFixed(1))), ys: ys, vals: seriesDefs.map((sd,si)=>rows.map(r=>r.v[si])),
+    names: seriesDefs.map(sd=>sd.name), colors: seriesDefs.map(sd=>sd.color), when: rows.map(r=>whenLabel(r.e)), unit: def.unit
+  };
+  const firstV = rows[0].v[0], lastV = rows[rows.length-1].v[0];
+  const aria = 'Tendencia de '+def.label+' en '+rows.length+' mediciones'+(firstV!==null && lastV!==null ? ', de '+firstV+' a '+lastV : '');
+  const legend = [];
+  if(seriesDefs.length > 1) seriesDefs.forEach(sd=> legend.push('<span class="vc-leg"><span class="vc-key" style="background:'+sd.color+'"></span>'+sd.name+'</span>'));
+  if(def.band) legend.push('<span class="vc-leg"><span class="vc-swatch"></span>Rango de referencia (adulto)</span>');
+
+  return '<div class="vchart" data-geo="'+escapeHTML(JSON.stringify(geo))+'">'
+    + (legend.length ? '<div class="vc-legend">'+legend.join('')+'</div>' : '')
+    + '<div class="vc-plot"><svg viewBox="0 0 '+W+' '+H+'" role="group" aria-label="'+escapeHTML(aria)+'" preserveAspectRatio="xMidYMid meet">'+svg+'</svg><div class="vc-tip"></div></div>'
+    + '</div>';
+}
+
+function patientCardHTML(p){
+  const entries = (p.entries||[]).slice().sort((a,b)=> (b.date+b.time).localeCompare(a.date+a.time));
+  const latest = entries[0];
+  const expanded = !!ui.expandedPatients[p.id];
+  return `<div class="patient-card">
+    <div class="patient-head" data-action="toggle-patient" data-pid="${p.id}">
+      <div>
+        <div class="patient-name">${escapeHTML(p.name)} ${p.room? `<span class="patient-room">· ${escapeHTML(p.room)}</span>`:''}</div>
+        ${latest? `<div class="patient-latest">TA ${fmtVital('TA',latest.TA)} · FC ${fmtVital('FC',latest.FC)} · FP ${fmtVital('FP',latest.FP)} · FR ${fmtVital('FR',latest.FR)} · T ${fmtVital('T',latest.T)} · SpO2 ${fmtVital('SPO2',latest.SPO2)} · Diuresis ${fmtVital('DIURESIS',latest.DIURESIS)}</div>` : `<div class="patient-latest">Sin registros aún</div>`}
+      </div>
+      <span class="icon-btn">${expanded?'▲':'▼'}</span>
+    </div>
+    ${expanded? `<div class="patient-body">
+      <div class="patient-actions">
+        <button class="btn sm" data-action="new-vitals" data-pid="${p.id}">+ Registrar signos</button>
+        <button class="btn secondary sm" data-action="delete-patient" data-pid="${p.id}">Eliminar paciente</button>
+      </div>
+      ${chartSectionHTML(p, entries)}
+      ${entries.length? `<div class="vt-scroll"><table class="vitals-table">
+        <thead><tr><th>Fecha</th><th>TA</th><th>FC</th><th>FP</th><th>FR</th><th>T</th><th>SpO2</th><th>Diuresis</th><th></th></tr></thead>
+        <tbody>${entries.map(e=>`<tr>
+          <td>${fmtDate(e.date)} ${e.time||''}</td><td>${fmtVital('TA',e.TA)}</td><td>${fmtVital('FC',e.FC)}</td><td>${fmtVital('FP',e.FP)}</td><td>${fmtVital('FR',e.FR)}</td><td>${fmtVital('T',e.T)}</td><td>${fmtVital('SPO2',e.SPO2)}</td><td>${fmtVital('DIURESIS',e.DIURESIS)}</td>
+          <td><button class="icon-btn" data-action="delete-vitals" data-pid="${p.id}" data-eid="${e.id}">✕</button></td>
+        </tr>`).join('')}</tbody>
+      </table></div><div class="ref-note">↑ ↓ marcan valores fuera de rangos de referencia para adultos (FC y FP 60–100, FR 12–20, SpO2 ≥ 95 %, T 36,0–37,9 °C, TA entre 90/60 y 139/89). Solo orientativo y educativo: no sustituye el criterio clínico.</div>` : `<div style="font-size:12px; color:var(--ink-faint); margin-top:10px;">Aún no hay signos vitales registrados para este paciente.</div>`}
+    </div>` : ''}
+  </div>`;
+}
+function esc(v){ return (v===undefined||v===null||v==='') ? '—' : escapeHTML(v); }
+
+/* ======================= TABLERO ======================= */
+function tableroView(){
+  return `
+  <div class="section-title">Historia clínica por materia</div>
+  <p class="section-sub">Cada materia es un expediente: tareas, cuadernos y avance.</p>
+  <div class="subject-grid">
+    ${state.subjects.map(s=>{
+      const pct = subjectProgress(s);
+      const pending = s.tasks.filter(t=>!t.done).length;
+      const mins = state.sessions.filter(x=>x.subjectId===s.id).reduce((a,x)=>a+x.minutes,0);
+      const dis = isDischarged(s);
+      return `<div class="card subject-card ${dis?'discharged':''}" data-open-subject="${s.id}">
+        <div class="sc-tab" style="background:${s.color}"></div>
+        ${dis? '<div class="discharge-ribbon">Alta médica</div>' : ''}
+        <h3>${escapeHTML(s.name)}</h3>
+        <div class="sc-meta">${s.tasks.length} tarea(s) · ${s.notes.length} nota(s) · ${(s.flashcards||[]).length} tarjeta(s)</div>
+        <div class="progress-bar"><div style="width:${pct}%; background:${s.color}"></div></div>
+        <div class="sc-stats"><span>${pending} pendiente(s)</span><span>${Math.round(mins/60*10)/10} h</span></div>
+      </div>`;
+    }).join('')}
+    <button class="add-subject-card" data-action="new-subject">+ Nueva materia</button>
+  </div>`;
+}
+
+function subjectDetailView(id){
+  const s = getSubject(id);
+  if(!s){ ui.openSubjectId=null; return tableroView(); }
+  const topTasks = s.tasks.filter(t=>!t.parentId).sort((a,b)=>(a.dueDate||'9999').localeCompare(b.dueDate||'9999'));
+  return `
+  <div class="detail-header">
+    <button class="back-link" data-action="back-tablero">← Tablero</button>
+    <h2 class="detail-title" style="border-left:4px solid ${s.color}; padding-left:12px;">${escapeHTML(s.name)}</h2>
+    <button class="icon-btn" data-action="edit-subject" data-id="${s.id}">Editar</button>
+    <button class="icon-btn" data-action="delete-subject" data-id="${s.id}">Eliminar</button>
+  </div>
+  <div class="subtabs">
+    <button data-subtab="tareas" class="${ui.subjectSubtab==='tareas'?'active':''}">Órdenes / Tareas</button>
+    <button data-subtab="notas" class="${ui.subjectSubtab==='notas'?'active':''}">Cuaderno</button>
+    <button data-subtab="flash" class="${ui.subjectSubtab==='flash'?'active':''}">Interconsulta</button>
+  </div>
+  ${ui.subjectSubtab==='flash' ? flashTabHTML(s) : ui.subjectSubtab==='tareas' ? `
+    <div class="fab-row"><button class="btn" data-action="new-task" data-sid="${s.id}">+ Nueva tarea</button></div>
+    ${topTasks.length? topTasks.map(t=>`
+      ${taskRowHTML(t, s.id, true, false)}
+      ${s.tasks.filter(sub=>sub.parentId===t.id).length? `<div class="task-sub">${s.tasks.filter(sub=>sub.parentId===t.id).sort((a,b)=>(a.dueDate||'').localeCompare(b.dueDate||'')).map(sub=>taskRowHTML(sub,s.id,true,false)).join('')}</div>`:''}
+    `).join('') : `<div class="empty"><div class="et">Expediente sin órdenes</div>Agrega tu primera tarea de ${escapeHTML(s.name)}.</div>`}
+  ` : `
+    <div class="fab-row"><button class="btn" data-action="new-note" data-sid="${s.id}">+ Nueva nota</button></div>
+    ${s.notes.length? s.notes.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(n=>`
+      <div class="note-item">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+          <div><h4>${escapeHTML(n.title)}</h4><span class="note-date">${fmtDate(n.date)}</span></div>
+          <div style="display:flex; gap:4px;">
+            <button class="icon-btn" data-action="edit-note" data-sid="${s.id}" data-nid="${n.id}">Editar</button>
+            <button class="icon-btn" data-action="delete-note" data-sid="${s.id}" data-nid="${n.id}">Eliminar</button>
+          </div>
+        </div>
+        <p>${escapeHTML(n.content)}</p>
+      </div>
+    `).join('') : `<div class="empty"><div class="et">Cuaderno vacío</div>Guarda aquí tus temas a estudiar y apuntes de ${escapeHTML(s.name)}.</div>`}
+  `}
+  `;
+}
+
+/* ======================= INTERCONSULTA: repetición espaciada ======================= */
+function isDue(c){ return !c.due || c.due <= todayStr(); }
+function dueCards(sj){ return (sj.flashcards||[]).filter(isDue); }
+function nextSchedule(c, g){
+  let ease = c.ease || 2.5, reps = c.reps || 0, interval = c.interval || 0;
+  if(g === 'again'){ reps = 0; interval = 1; ease = Math.max(1.3, ease - 0.2); }
+  else {
+    reps += 1;
+    if(reps === 1) interval = (g==='easy') ? 3 : 1;
+    else if(reps === 2) interval = (g==='easy') ? 6 : 3;
+    else interval = Math.max(interval + 1, Math.round(interval * ease * (g==='easy' ? 1.3 : 1)));
+    if(g === 'easy') ease = Math.min(3.0, ease + 0.15);
+  }
+  return {ease:ease, reps:reps, interval:interval};
+}
+function gradeCard(c, g){
+  const n = nextSchedule(c, g);
+  c.ease = n.ease; c.reps = n.reps; c.interval = n.interval;
+  c.due = addDays(todayStr(), n.interval); c.lastReview = todayStr();
+  if(g === 'again') c.missed = (c.missed||0) + 1; else c.known = (c.known||0) + 1;
+}
+function intervalLabel(d){ return d <= 1 ? '1 d' : d < 30 ? d+' d' : Math.round(d/30)+' m'; }
+function dueChip(c){
+  if(!c.due) return '<span class="chip">Nueva</span>';
+  const d = daysBetween(todayStr(), c.due);
+  if(d <= 0) return '<span class="chip due-now">Pendiente</span>';
+  return '<span class="chip">en '+intervalLabel(d)+'</span>';
+}
+function flashDueHTML(){
+  const rows = state.subjects.map(sj=>({sj:sj, n:dueCards(sj).length})).filter(x=>x.n>0);
+  if(!rows.length) return '';
+  const total = rows.reduce((a,x)=>a+x.n, 0);
+  return '<div class="due-card"><div><span class="pearl-label">Interconsulta de hoy</span><p>Tienes <strong>'+total+'</strong> tarjeta(s) por repasar.</p></div>'
+    + '<div class="due-chips">'+rows.map(x=>'<button class="btn sm secondary" data-action="open-flash" data-sid="'+x.sj.id+'">'+escapeHTML(x.sj.name)+' · '+x.n+'</button>').join('')+'</div></div>';
+}
+function flashTabHTML(s){
+  const cards = s.flashcards || [];
+  const due = dueCards(s).length;
+  const today = todayStr();
+  const doneToday = state.reviews.filter(r=>r.subjectId===s.id && r.date===today).reduce((a,r)=>a+r.total, 0);
+  return `
+    <p class="section-sub" style="margin-bottom:12px;">Tarjetas de repaso rápido de ${escapeHTML(s.name)}. Tras cada una eliges «Otra vez», «Bien» o «Fácil» y ROUND programa cuándo volver a verla.</p>
+    <div class="fab-row">
+      ${due? `<button class="btn" data-action="start-review" data-mode="due" data-sid="${s.id}">Repasar (${due})</button>` : ''}
+      <button class="btn ${due?'secondary':''}" data-action="new-flash" data-sid="${s.id}">+ Nueva tarjeta</button>
+      ${cards.length? `<button class="btn ghost" data-action="start-review" data-mode="all" data-sid="${s.id}">Practicar todas</button>` : ''}
+      <span class="review-stat">${cards.length && !due ? 'Al día · ' : ''}Repasadas hoy: ${doneToday}</span>
+    </div>
+    ${cards.length? cards.map(c=>`
+      <div class="flash-item">
+        <div style="min-width:0;">
+          <div class="fi-front">${escapeHTML(c.front)}</div>
+          <div class="fi-back">${escapeHTML(c.back)}</div>
+          <div style="margin-top:6px;">${dueChip(c)}</div>
+        </div>
+        <button class="icon-btn" data-action="delete-flash" data-sid="${s.id}" data-fid="${c.id}">✕</button>
+      </div>`).join('') : `<div class="empty"><div class="et">Sin tarjetas todavía</div>Crea preguntas cortas (ej. "Nervio que inerva el deltoides") para repasarlas en minutos.</div>`}
+  `;
+}
+
+function taskRowHTML(t, subjectId, showDelete, showSubject){
+  const overdue = t.dueDate && !t.done && t.dueDate < todayStr();
+  return `<div class="task-row ${t.done?'done':''}">
+    <button class="task-check ${t.done?'checked':''}" data-action="toggle-task" data-sid="${subjectId}" data-tid="${t.id}"></button>
+    <div class="task-main">
+      <div class="task-title">${escapeHTML(t.title)}</div>
+      <div class="task-tags">
+        <span class="chip type-${t.type}">${typeLabel(t.type)}</span>
+        ${t.priority==='urgente'? `<span class="chip urgente">Urgente</span>`:''}
+        ${t.dueDate? `<span class="task-date" style="${overdue?'color:var(--black);font-weight:700;':''}">${fmtDate(t.dueDate)}</span>`:''}
+        ${showSubject? `<span class="task-date">· ${escapeHTML(getSubject(subjectId)?getSubject(subjectId).name:'')}</span>`:''}
+      </div>
+    </div>
+    ${showDelete? `<button class="icon-btn" data-action="delete-task" data-sid="${subjectId}" data-tid="${t.id}">✕</button>`:''}
+  </div>`;
+}
+function typeLabel(type){
+  return {lectura:'Lectura', practica:'Práctica', repaso:'Repaso', examen:'Examen'}[type] || type;
+}
+
+/* ======================= RONDA (planificador) ======================= */
+function rondaView(){
+  return `
+  <div class="section-title">Ronda de estudio</div>
+  <p class="section-sub">Crea una tarea grande y ROUND la distribuye en turnos de guardia hasta la fecha límite, con repasos automáticos.</p>
+  <div class="card" style="padding:22px; max-width:520px;">
+    <form id="ronda-form">
+      <div class="field-row">
+        <label class="field">Materia</label>
+        <select name="subjectId">${state.subjects.map(s=>`<option value="${s.id}">${escapeHTML(s.name)}</option>`).join('')}</select>
+      </div>
+      <div class="field-row">
+        <label class="field">Tema / tarea</label>
+        <input type="text" name="title" placeholder="Ej: Sistema cardiovascular" required>
+      </div>
+      <div class="grid2">
+        <div class="field-row">
+          <label class="field">Tipo</label>
+          <select name="type">
+            <option value="lectura">Lectura</option><option value="practica">Práctica</option><option value="repaso">Repaso</option><option value="examen">Examen</option>
+          </select>
+        </div>
+        <div class="field-row"><label class="field">Fecha límite</label><input type="date" name="dueDate" required></div>
+      </div>
+      <label class="checkbox-line"><input type="checkbox" name="split" checked> Dividir en turnos de guardia + repasos automáticos</label>
+      <div class="modal-actions" style="justify-content:flex-start; margin-top:18px;">
+        <button class="btn" type="submit">Programar ronda</button>
+      </div>
+    </form>
+  </div>`;
+}
+
+function computeSplit(title, dueDate){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const due = new Date(dueDate+'T00:00:00');
+  const diffDays = Math.max(1, Math.round((due-today)/86400000));
+  const blocks = Math.min(6, Math.max(2, Math.round(diffDays/2)));
+  const turnos = [];
+  for(let i=1;i<=blocks;i++){
+    const d = new Date(today);
+    const offset = Math.round(i*diffDays/(blocks+1));
+    d.setDate(d.getDate()+Math.max(1,offset));
+    if(d>due) d.setTime(due.getTime());
+    turnos.push({date: localDateStr(d), label:'Turno '+i+': '+title});
+  }
+  [1,3,7].forEach(days=>{
+    const d = new Date(due); d.setDate(d.getDate()+days);
+    turnos.push({date: localDateStr(d), label:'Repaso (+'+days+'d): '+title, repaso:true});
+  });
+  return turnos;
+}
+
+/* ======================= GUARDIA / POMODORO ======================= */
+function guardiaView(){
+  const rem = pomoRemaining();
+  const mins = Math.floor(rem/60).toString().padStart(2,'0');
+  const secs = (rem%60).toString().padStart(2,'0');
+  const sessionsToday = state.sessions.filter(s=>s.date===todayStr()).slice().reverse();
+  return `
+  <div class="section-title">Turno de guardia</div>
+  <p class="section-sub">Temporizador Pomodoro vinculado a una materia. El tiempo se acumula en sus estadísticas.</p>
+  <div class="pomo-wrap">
+    <div class="card pomo-clock-card">
+      <div class="pomo-mode">${ui.pomo.mode==='work'?'En guardia':'Descanso'}</div>
+      <div class="pomo-time">${mins}:${secs}</div>
+      <div class="field-row" style="max-width:260px; margin:18px auto 0; text-align:left;">
+        <label class="field">Materia</label>
+        <select id="pomo-subject" ${ui.pomo.running?'disabled':''}>
+          <option value="">— sin materia —</option>
+          ${state.subjects.map(s=>`<option value="${s.id}" ${ui.pomo.subjectId===s.id?'selected':''}>${escapeHTML(s.name)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="pomo-controls">
+        ${!ui.pomo.running? `<button class="btn" data-action="pomo-start">Iniciar</button>` : `<button class="btn secondary" data-action="pomo-pause">Pausar</button>`}
+        <button class="btn ghost" data-action="pomo-reset">Reiniciar</button>
+      </div>
+    </div>
+    <div class="pomo-side">
+      <div class="card pomo-settings-card">
+        <h4>Ciclos</h4>
+        <div class="grid2">
+          <div class="field-row"><label class="field">Guardia (min)</label><input type="number" id="pomo-work" value="${state.pomoSettings.work}" min="5" max="180" ${ui.pomo.running?'disabled':''}></div>
+          <div class="field-row"><label class="field">Descanso (min)</label><input type="number" id="pomo-brk" value="${state.pomoSettings.brk}" min="1" max="60" ${ui.pomo.running?'disabled':''}></div>
+        </div>
+        <button class="btn secondary sm" data-action="pomo-save-settings" ${ui.pomo.running?'disabled':''}>Guardar ciclo</button>
+      </div>
+      <div class="card session-log">
+        <h4 style="margin:0 0 8px; font-family:var(--font-display); font-size:16px; color:var(--navy);">Guardias de hoy</h4>
+        ${sessionsToday.length? sessionsToday.map(s=>`<div class="sl-row"><span>${escapeHTML(getSubject(s.subjectId)?getSubject(s.subjectId).name:'General')}</span><span>${s.minutes} min</span></div>`).join('') : `<div style="font-size:12.5px; color:var(--ink-faint);">Aún sin guardias registradas hoy.</div>`}
+      </div>
+    </div>
+  </div>`;
+}
+
+const BASE_TITLE = document.title;
+function pomoRemaining(){
+  if(ui.pomo.running && ui.pomo.endsAt) return Math.max(0, Math.ceil((ui.pomo.endsAt - Date.now())/1000));
+  return ui.pomo.remaining;
+}
+function updatePomoTitle(){
+  Native.syncPomo(ui.pomo.running, ui.pomo.endsAt, ui.pomo.mode);
+  if(ui.pomo.running){
+    const r = pomoRemaining();
+    document.title = String(Math.floor(r/60)).padStart(2,'0')+':'+String(r%60).padStart(2,'0')+' · '+(ui.pomo.mode==='work'?'Guardia':'Descanso')+' · ROUND';
+  } else { document.title = BASE_TITLE; }
+}
+/* El tiempo se calcula con la hora de fin (endsAt), no restando un segundo por tic:
+   así no se desfasa si el navegador pausa o ralentiza la pestaña en segundo plano. */
+function pomoTick(){
+  if(!ui.pomo.running) return;
+  ui.pomo.remaining = pomoRemaining();
+  let needsFullRender = (ui.tab==='guardia');
+  if(ui.pomo.remaining <= 0){
+    needsFullRender = true;
+    if(ui.pomo.mode==='work'){
+      const usedMinutes = state.pomoSettings.work;
+      state.sessions.push({id:uid(), subjectId: ui.pomo.subjectId||null, minutes: usedMinutes, date: todayStr()});
+      scheduleSave(false);
+      playChime(); showToast_('Guardia completada: '+usedMinutes+' min. Toca descanso.');
+      ui.pomo.mode = 'break';
+      ui.pomo.remaining = state.pomoSettings.brk*60;
+    } else {
+      playBeep(); showToast_('Descanso terminado. Vuelve a guardia.');
+      ui.pomo.mode = 'work';
+      ui.pomo.remaining = state.pomoSettings.work*60;
+    }
+    ui.pomo.endsAt = Date.now() + ui.pomo.remaining*1000;
+  }
+  updatePomoTitle();
+  // Solo re-renderizamos completo si estamos en la pestaña de guardia (no borrar lo que se escribe en otros formularios).
+  if(needsFullRender) render();
+}
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && ui.pomo.running) pomoTick(); });
+
+/* ======================= HABITOS ======================= */
+function habitosView(){
+  const t = todayStr();
+  return `
+  <div class="section-title">Hábitos clínicos</div>
+  <p class="section-sub">Constancia diaria — la base de cualquier buen residente.</p>
+  <div class="fab-row"><button class="btn ghost" data-action="new-habit">+ Nuevo hábito</button></div>
+  ${state.habits.map(h=>{
+    const on = !!h.log[t];
+    let streak = 0; let d = new Date();
+    for(let i=0;i<60;i++){ const ds=localDateStr(d); if(h.log[ds]){streak++; d.setDate(d.getDate()-1);} else if(ds===t){d.setDate(d.getDate()-1); continue;} else break; }
+    const last7 = [];
+    for(let i=6;i>=0;i--){ const dd=new Date(); dd.setDate(dd.getDate()-i); last7.push(h.log[localDateStr(dd)]); }
+    return `<div class="habit-row">
+      <div style="flex:1;">
+        <div class="habit-name">${escapeHTML(h.name)}</div>
+        <div class="habit-streak">${streak} día(s) seguidos</div>
+        <div class="week-strip">${last7.map(v=>`<div class="${v?'on':''}"></div>`).join('')}</div>
+      </div>
+      <button class="habit-toggle ${on?'on':''}" data-action="toggle-habit" data-hid="${h.id}"><div class="dot"></div></button>
+      <button class="icon-btn" data-action="delete-habit" data-hid="${h.id}">✕</button>
+    </div>`;
+  }).join('')}`;
+}
+
+/* ======================= PROGRESO / RANGO ======================= */
+function progresoView(){
+  const idx = currentRankIndex();
+  const rank = RANKS[idx];
+  const next = RANKS[idx+1];
+  const pct = next? Math.round(((state.completedTasksTotal - rank.min) / (next.min - rank.min))*100) : 100;
+  return `
+  <div class="section-title">Carrera médica</div>
+  <p class="section-sub">Tu rango sube conforme completas tareas (interno: 20 tareas; cada rango siguiente, 10 más).</p>
+  <div class="card rank-hero">
+    <div class="badge-lg">${badgeSVG(rank.ring, 88)}</div>
+    <div class="rh-name">${rank.name}</div>
+    <div class="rh-sub" style="font-family:var(--font-display); font-style:italic; font-size:14px; margin-bottom:4px;">${rank.tagline}</div>
+    <div class="rh-sub">${state.completedTasksTotal} tareas completadas en total</div>
+    <div class="rank-progress">
+      <div class="rp-bar"><div style="width:${Math.min(100,Math.max(0,pct))}%"></div></div>
+      <div class="rp-label">${next? (next.min - state.completedTasksTotal)+' tarea(s) para '+next.name : 'Rango máximo alcanzado'}</div>
+    </div>
+  </div>
+  <div class="rank-ladder">
+    ${RANKS.map((r,i)=>`
+      <div class="rank-item ${i>idx?'locked':''} ${i===idx?'current':''}">
+        <div class="badge-sm">${badgeSVG(r.ring, 34, {mono:i>idx})}</div>
+        <div><div class="ri-name">${r.name}</div><div class="ri-range">${r.min}+ tareas</div></div>
+      </div>
+    `).join('')}
+  </div>` + dataCardHTML();
+}
+
+/* ======================= MODALS ======================= */
+function modalHTML(){
+  const m = ui.modal;
+  if(m.type==='new-subject' || m.type==='edit-subject'){
+    const editing = m.type==='edit-subject';
+    const s = editing? getSubject(m.id) : null;
+    return overlayWrap(`
+      <h3>${editing?'Editar materia':'Nueva materia'}</h3>
+      <form id="subject-form">
+        <div class="field-row"><label class="field">Nombre</label><input type="text" name="name" value="${s?escapeHTML(s.name):''}" required></div>
+        <label class="field">Color</label>
+        <div class="color-dots">${DEFAULT_SUBJECT_COLORS.map(c=>`<div class="color-dot ${((s?s.color:DEFAULT_SUBJECT_COLORS[0])===c)?'selected':''}" style="background:${c}" data-color="${c}"></div>`).join('')}</div>
+        <input type="hidden" name="color" value="${s?s.color:DEFAULT_SUBJECT_COLORS[0]}">
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" data-action="close-modal">Cancelar</button>
+          <button type="submit" class="btn">Guardar</button>
+        </div>
+      </form>`);
+  }
+  if(m.type==='new-task'){
+    const s = getSubject(m.sid);
+    return overlayWrap(`
+      <h3>Nueva tarea — ${escapeHTML(s.name)}</h3>
+      <form id="task-form">
+        <div class="field-row"><label class="field">Título</label><input type="text" name="title" required></div>
+        <div class="grid2">
+          <div class="field-row"><label class="field">Tipo</label>
+            <select name="type"><option value="lectura">Lectura</option><option value="practica">Práctica</option><option value="repaso">Repaso</option><option value="examen">Examen</option></select>
+          </div>
+          <div class="field-row"><label class="field">Prioridad</label>
+            <select name="priority"><option value="rutina">Rutina</option><option value="urgente">Urgente</option></select>
+          </div>
+        </div>
+        <div class="field-row"><label class="field">Fecha límite (opcional)</label><input type="date" name="dueDate"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" data-action="close-modal">Cancelar</button>
+          <button type="submit" class="btn">Agregar</button>
+        </div>
+      </form>`);
+  }
+  if(m.type==='new-note' || m.type==='edit-note'){
+    const s = getSubject(m.sid);
+    const n = m.type==='edit-note'? s.notes.find(x=>x.id===m.nid) : null;
+    return overlayWrap(`
+      <h3>${n?'Editar nota':'Nueva nota'} — ${escapeHTML(s.name)}</h3>
+      <form id="note-form">
+        <div class="field-row"><label class="field">Título</label><input type="text" name="title" value="${n?escapeHTML(n.title):''}" required></div>
+        <div class="field-row"><label class="field">Contenido</label><textarea name="content" rows="6">${n?escapeHTML(n.content):''}</textarea></div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" data-action="close-modal">Cancelar</button>
+          <button type="submit" class="btn">Guardar</button>
+        </div>
+      </form>`);
+  }
+  if(m.type==='new-habit'){
+    return overlayWrap(`
+      <h3>Nuevo hábito</h3>
+      <form id="habit-form">
+        <div class="field-row"><label class="field">Nombre</label><input type="text" name="name" placeholder="Ej: Lectura de guías clínicas" required></div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" data-action="close-modal">Cancelar</button>
+          <button type="submit" class="btn">Agregar</button>
+        </div>
+      </form>`);
+  }
+  if(m.type==='confirm-split'){
+    const turnos = m.turnos;
+    return overlayWrap(`
+      <h3>Ronda programada</h3>
+      <p style="font-size:13px; color:var(--ink-soft);">Se crearán ${turnos.length} tareas: turnos de estudio + repasos automáticos a +1, +3 y +7 días de la fecha límite.</p>
+      <div class="split-preview"><ul>${turnos.map(t=>`<li>${fmtDate(t.date)} — ${escapeHTML(t.label)}</li>`).join('')}</ul></div>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" data-action="close-modal">Cancelar</button>
+        <button type="button" class="btn" data-action="confirm-split">Confirmar ronda</button>
+      </div>`);
+  }
+  if(m.type==='new-patient'){
+    return overlayWrap(`
+      <h3>Nuevo paciente</h3>
+      <form id="patient-form">
+        <p class="privacy-note" style="margin:0 0 12px;">No escribas nombres completos ni datos que identifiquen al paciente.</p>
+        <div class="field-row"><label class="field">Iniciales o código del paciente</label><input type="text" name="name" placeholder="Ej: J.P. o Paciente 3" autocomplete="off" required></div>
+        <div id="privacy-warn" class="privacy-warn" hidden>Si es un nombre completo, usa solo iniciales o un código. Evita nombres, cédula o cualquier dato que identifique al paciente.</div>
+        <div class="field-row"><label class="field">Cama / Servicio (opcional)</label><input type="text" name="room" placeholder="Ej: Medicina Interna, cama 4"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" data-action="close-modal">Cancelar</button>
+          <button type="submit" class="btn">Agregar paciente</button>
+        </div>
+      </form>`);
+  }
+  if(m.type==='new-vitals'){
+    const p = getPatient(m.pid);
+    return overlayWrap(`
+      <h3>Registrar signos — ${escapeHTML(p.name)}</h3>
+      <form id="vitals-form">
+        <div class="grid2" style="margin-bottom:2px;">
+          <div class="field-row"><label class="field">Fecha</label><input type="date" name="date" value="${todayStr()}"></div>
+          <div class="field-row"><label class="field">Hora</label><input type="time" name="time" value="${nowTime()}"></div>
+        </div>
+        <div class="vitals-grid">
+          <div class="field-row"><label class="field">TA</label><input type="text" name="TA" placeholder="120/80"></div>
+          <div class="field-row"><label class="field">FC</label><input type="text" name="FC" placeholder="lpm"></div>
+          <div class="field-row"><label class="field">FP</label><input type="text" name="FP" placeholder="lpm"></div>
+          <div class="field-row"><label class="field">FR</label><input type="text" name="FR" placeholder="rpm"></div>
+          <div class="field-row"><label class="field">T</label><input type="text" name="T" placeholder="°C"></div>
+          <div class="field-row"><label class="field">SpO2</label><input type="text" name="SPO2" placeholder="%"></div>
+        </div>
+        <div class="field-row"><label class="field">Diuresis</label><input type="text" name="DIURESIS" placeholder="ml/24h"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" data-action="close-modal">Cancelar</button>
+          <button type="submit" class="btn">Guardar registro</button>
+        </div>
+      </form>`);
+  }
+  if(m.type==='rankup'){
+    const r = RANKS[m.idx];
+    return overlayWrap(`
+      <div class="rankup-modal">
+        <div class="ru-eyebrow">Ascenso de rango</div>
+        <div class="ru-badge">${badgeSVG(r.ring, 96)}</div>
+        <h3>${r.name}</h3>
+        <p class="ru-tagline">${r.tagline}</p>
+        <button class="btn" data-action="close-modal">Continuar la ronda</button>
+      </div>`);
+  }
+  if(m.type==='new-flash'){
+    const sj = getSubject(m.sid);
+    return overlayWrap(`
+      <h3>Nueva tarjeta — ${escapeHTML(sj.name)}</h3>
+      <form id="flash-form">
+        <div class="field-row"><label class="field">Pregunta</label><textarea name="front" rows="2" required></textarea></div>
+        <div class="field-row"><label class="field">Respuesta</label><textarea name="back" rows="3" required></textarea></div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" data-action="close-modal">Cancelar</button>
+          <button type="submit" class="btn">Guardar</button>
+        </div>
+      </form>`);
+  }
+  if(m.type==='review'){
+    const rv = ui.review;
+    const sj = getSubject(rv.sid);
+    if(rv.i >= rv.queue.length){
+      const missedN = Object.keys(rv.missed).length;
+      const okN = rv.total - missedN;
+      return overlayWrap(`
+        <div class="rankup-modal">
+          <div class="ru-eyebrow">${rv.practice ? 'Práctica completa' : 'Interconsulta completa'}</div>
+          <h3>${okN} de ${rv.total} a la primera</h3>
+          <p class="ru-tagline">${missedN===0 ? 'Repaso limpio.' : 'Las que fallaste volverán a aparecer pronto.'}${rv.practice ? '' : ' ROUND ya programó tu próximo repaso.'}</p>
+          <button class="btn" data-action="close-modal">Cerrar</button>
+        </div>`);
+    }
+    const c = (sj.flashcards||[]).find(x=>x.id===rv.queue[rv.i]);
+    if(!c){
+      return overlayWrap(`
+        <div class="rankup-modal">
+          <p class="ru-tagline">Esta tarjeta ya no existe.</p>
+          <button class="btn" data-action="close-modal">Cerrar</button>
+        </div>`);
+    }
+    const pv = (rv.flipped && !rv.practice) ? {
+      again: intervalLabel(nextSchedule(c,'again').interval),
+      good: intervalLabel(nextSchedule(c,'good').interval),
+      easy: intervalLabel(nextSchedule(c,'easy').interval)
+    } : null;
+    const gb = (g, label, cls)=> '<button class="btn '+cls+' grade-btn" data-action="grade" data-g="'+g+'">'+label+(pv?'<small>'+pv[g]+'</small>':'')+'</button>';
+    return overlayWrap(`
+      <div class="review-progress">${escapeHTML(sj.name)} · quedan ${rv.queue.length - rv.i}${rv.practice ? ' · práctica' : ''}</div>
+      <div class="flip-card-wrap"><div class="flip-card ${rv.flipped?'flipped':''}" data-action="flip-card">
+        <span class="fc-label">${rv.flipped?'Respuesta':'Pregunta'}</span>
+        <div class="fc-text">${escapeHTML(rv.flipped? c.back : c.front)}</div>
+      </div></div>
+      <div class="review-controls">
+        ${rv.flipped
+          ? gb('again','Otra vez','secondary') + gb('good','Bien','') + gb('easy','Fácil','secondary')
+          : '<button class="btn" data-action="flip-card">Mostrar respuesta</button>'}
+      </div>
+      <div class="modal-actions" style="justify-content:center;"><button type="button" class="icon-btn" data-action="close-modal">Salir del repaso</button></div>`);
+  }
+  if(m.type==='import'){
+    return overlayWrap(`
+      <h3>Importar copia</h3>
+      <p style="font-size:13px; color:var(--ink-soft); line-height:1.5; margin:0 0 12px;">Elige un archivo <strong>.json</strong> exportado desde ROUND, o pega aquí su contenido. Reemplazará los datos actuales (antes de continuar te pediré confirmación).</p>
+      <div class="field-row"><label class="field">Archivo</label><input type="file" id="import-file" accept=".json,application/json"></div>
+      <div class="field-row"><label class="field">O pega el texto de la copia</label><textarea id="import-text" rows="5" placeholder='{"app":"ROUND", ...}'></textarea></div>
+      <div id="import-error" class="privacy-warn" hidden></div>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" data-action="close-modal">Cancelar</button>
+        <button type="button" class="btn" data-action="do-import">Importar</button>
+      </div>`);
+  }
+  if(m.type==='confirm'){
+    return overlayWrap(`
+      <h3>Confirmar</h3>
+      <p style="font-size:13.5px; color:var(--ink-soft); line-height:1.5;">${escapeHTML(m.message)}</p>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" data-action="close-modal">Cancelar</button>
+        <button type="button" class="btn danger" data-action="confirm-yes" style="background:#7a2e2e; color:#fff; border-color:#7a2e2e;">${escapeHTML(m.confirmLabel||'Sí, eliminar')}</button>
+      </div>
+    `);
+  }
+  return '';
+}
+function overlayWrap(inner){ return '<div class="overlay" data-overlay="1"><div class="modal">'+inner+'</div></div>'; }
+
+/* ======================= EVENTS ======================= */
+function bindEvents(){
+  document.querySelectorAll('[data-nav]').forEach(b=> b.onclick = ()=>{ ui.tab=b.dataset.nav; ui.openSubjectId=null; render(); });
+
+  document.querySelectorAll('[data-open-subject]').forEach(b=> b.onclick = ()=>{ ui.openSubjectId=b.dataset.openSubject; ui.subjectSubtab='tareas'; render(); });
+  const backBtn = document.querySelector('[data-action="back-tablero"]'); if(backBtn) backBtn.onclick = ()=>{ ui.openSubjectId=null; render(); };
+  document.querySelectorAll('[data-subtab]').forEach(b=> b.onclick=()=>{ ui.subjectSubtab=b.dataset.subtab; render(); });
+
+  const addSubjectBtn = document.querySelector('[data-action="new-subject"]'); if(addSubjectBtn) addSubjectBtn.onclick=()=>{ ui.modal={type:'new-subject'}; render(); };
+  document.querySelectorAll('[data-action="edit-subject"]').forEach(b=> b.onclick=()=>{ ui.modal={type:'edit-subject', id:b.dataset.id}; render(); });
+  document.querySelectorAll('[data-action="delete-subject"]').forEach(b=> b.onclick=()=>{
+    ui.modal = {type:'confirm', message:'¿Eliminar esta materia y todas sus tareas/notas? Esta acción no se puede deshacer.', run:()=>{
+      const s = getSubject(b.dataset.id);
+      if(s){ s.tasks.forEach(t=>{ if(t.done) state.completedTasksTotal = Math.max(0, state.completedTasksTotal-1); }); }
+      state.subjects = state.subjects.filter(s=>s.id!==b.dataset.id);
+      checkRankUp();
+      ui.openSubjectId=null; scheduleSave(); showToast_('Materia eliminada');
+    }};
+    render();
+  });
+
+  document.querySelectorAll('[data-action="new-task"]').forEach(b=> b.onclick=()=>{ ui.modal={type:'new-task', sid:b.dataset.sid}; render(); });
+  document.querySelectorAll('[data-action="toggle-task"]').forEach(b=> b.onclick=()=>{
+    const s = getSubject(b.dataset.sid); const t = s.tasks.find(x=>x.id===b.dataset.tid);
+    markTaskComplete(b.dataset.sid, b.dataset.tid, !t.done);
+  });
+  document.querySelectorAll('[data-action="delete-task"]').forEach(b=> b.onclick=()=>{
+    ui.modal = {type:'confirm', message:'¿Eliminar esta tarea?', run:()=>{ deleteTask(b.dataset.sid, b.dataset.tid); showToast_('Tarea eliminada'); }};
+    render();
+  });
+
+  document.querySelectorAll('[data-action="new-note"]').forEach(b=> b.onclick=()=>{ ui.modal={type:'new-note', sid:b.dataset.sid}; render(); });
+  document.querySelectorAll('[data-action="edit-note"]').forEach(b=> b.onclick=()=>{ ui.modal={type:'edit-note', sid:b.dataset.sid, nid:b.dataset.nid}; render(); });
+  document.querySelectorAll('[data-action="delete-note"]').forEach(b=> b.onclick=()=>{
+    ui.modal = {type:'confirm', message:'¿Eliminar esta nota?', run:()=>{
+      const s = getSubject(b.dataset.sid); s.notes = s.notes.filter(n=>n.id!==b.dataset.nid); scheduleSave(); showToast_('Nota eliminada');
+    }};
+    render();
+  });
+
+  document.querySelectorAll('[data-action="toggle-habit"]').forEach(b=> b.onclick=()=>{
+    const h = state.habits.find(x=>x.id===b.dataset.hid); const t = todayStr();
+    h.log[t] = !h.log[t]; scheduleSave(); render();
+  });
+  const newHabitBtn = document.querySelector('[data-action="new-habit"]'); if(newHabitBtn) newHabitBtn.onclick=()=>{ ui.modal={type:'new-habit'}; render(); };
+  document.querySelectorAll('[data-action="delete-habit"]').forEach(b=> b.onclick=()=>{
+    ui.modal = {type:'confirm', message:'¿Eliminar este hábito?', run:()=>{
+      state.habits = state.habits.filter(h=>h.id!==b.dataset.hid); scheduleSave(); showToast_('Hábito eliminado');
+    }};
+    render();
+  });
+
+  // Pacientes
+  const newPatientBtn = document.querySelector('[data-action="new-patient"]'); if(newPatientBtn) newPatientBtn.onclick=()=>{ ui.modal={type:'new-patient'}; render(); };
+  document.querySelectorAll('[data-action="toggle-patient"]').forEach(b=> b.onclick=()=>{
+    const id = b.dataset.pid; ui.expandedPatients[id] = !ui.expandedPatients[id]; render();
+  });
+  document.querySelectorAll('[data-action="new-vitals"]').forEach(b=> b.onclick=(e)=>{ e.stopPropagation(); ui.modal={type:'new-vitals', pid:b.dataset.pid}; render(); });
+  document.querySelectorAll('[data-action="delete-patient"]').forEach(b=> b.onclick=(e)=>{
+    e.stopPropagation();
+    ui.modal = {type:'confirm', message:'¿Eliminar este paciente y todo su historial de signos vitales?', run:()=>{
+      state.patients = state.patients.filter(p=>p.id!==b.dataset.pid); scheduleSave(); showToast_('Paciente eliminado');
+    }};
+    render();
+  });
+  document.querySelectorAll('[data-action="delete-vitals"]').forEach(b=> b.onclick=(e)=>{
+    e.stopPropagation();
+    ui.modal = {type:'confirm', message:'¿Eliminar este registro de signos vitales?', run:()=>{
+      const p = getPatient(b.dataset.pid); p.entries = p.entries.filter(x=>x.id!==b.dataset.eid); scheduleSave(); showToast_('Registro eliminado');
+    }};
+    render();
+  });
+
+  // Tareas por hacer (quick)
+  function addQuickTask(){
+    const input = document.getElementById('quick-task-input');
+    const val = input.value.trim();
+    if(!val) return;
+    state.quickTasks.push({id:uid(), title:val, done:false, completedDate:null});
+    scheduleSave(); render();
+  }
+  const addQuickBtn = document.querySelector('[data-action="add-quick-task"]'); if(addQuickBtn) addQuickBtn.onclick = addQuickTask;
+  const quickInput = document.getElementById('quick-task-input');
+  if(quickInput) quickInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); addQuickTask(); } });
+  document.querySelectorAll('[data-action="toggle-quick"]').forEach(b=> b.onclick=()=>{
+    const t = state.quickTasks.find(x=>x.id===b.dataset.qid); toggleQuickTask(b.dataset.qid, !t.done);
+  });
+  document.querySelectorAll('[data-action="delete-quick"]').forEach(b=> b.onclick=()=> deleteQuickTask(b.dataset.qid));
+
+  // Sonido
+  const soundBtn = document.querySelector('[data-action="toggle-sound"]');
+  if(soundBtn) soundBtn.onclick = ()=>{
+    state.settings.sound = !state.settings.sound;
+    scheduleSave(false); render();
+    if(state.settings.sound) playBeep();
+  };
+
+  // Respaldo / importación
+  document.querySelectorAll('[data-action="export-backup"]').forEach(b=> b.onclick = downloadBackup);
+  document.querySelectorAll('[data-action="copy-backup"]').forEach(b=> b.onclick = copyBackupText);
+  document.querySelectorAll('[data-action="open-import"]').forEach(b=> b.onclick = ()=>{ ui.modal = {type:'import'}; render(); });
+  const importFile = document.getElementById('import-file');
+  if(importFile) importFile.onchange = ()=>{
+    const f = importFile.files && importFile.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = ()=>{ const ta = document.getElementById('import-text'); if(ta) ta.value = String(r.result||''); };
+    r.readAsText(f);
+  };
+  const doImportBtn = document.querySelector('[data-action="do-import"]');
+  if(doImportBtn) doImportBtn.onclick = ()=>{
+    const res = parseBackup(document.getElementById('import-text').value);
+    if(!res.ok){
+      const er = document.getElementById('import-error'); er.textContent = res.error; er.hidden = false;
+      return;
+    }
+    const c = res.clean;
+    const nCards = c.subjects.reduce((a,sj)=>a+sj.flashcards.length, 0);
+    ui.modal = {type:'confirm', confirmLabel:'Sí, reemplazar',
+      message:'Se reemplazarán tus datos actuales por la copia: '+c.subjects.length+' materia(s), '+c.patients.length+' paciente(s), '+nCards+' tarjeta(s) y '+c.completedTasksTotal+' tarea(s) completadas. Si quieres conservar lo actual, expórtalo primero. ¿Continuar?',
+      run:()=>{ applyImportedState(c); }};
+    render();
+  };
+
+  // Privacidad: aviso en vivo si el campo parece un nombre completo
+  const patientNameInput = document.querySelector('#patient-form input[name=name]');
+  if(patientNameInput) patientNameInput.addEventListener('input', ()=>{
+    const w = document.getElementById('privacy-warn'); if(w) w.hidden = !looksIdentifying(patientNameInput.value);
+  });
+
+  // Gráficas de tendencia
+  document.querySelectorAll('[data-action="chart-metric"]').forEach(b=> b.onclick=(e)=>{
+    e.stopPropagation(); ui.chartMetric[b.dataset.pid] = b.dataset.m; render();
+  });
+  document.querySelectorAll('.vchart').forEach(box=>{
+    let geo; try{ geo = JSON.parse(box.dataset.geo); }catch(e){ return; }
+    const hit = box.querySelector('.vc-hit'), cross = box.querySelector('.vc-cross'), tip = box.querySelector('.vc-tip'), svg = box.querySelector('svg');
+    const hovs = box.querySelectorAll('.vc-hov');
+    let cur = -1;
+    function show(i){
+      cur = i;
+      const x = geo.xs[i];
+      cross.setAttribute('x1', x); cross.setAttribute('x2', x); cross.style.display = '';
+      hovs.forEach((h, si)=>{ const y = geo.ys[si][i]; if(y===null){ h.style.display='none'; } else { h.setAttribute('cx', x); h.setAttribute('cy', y); h.style.display=''; } });
+      tip.textContent = '';
+      const head = document.createElement('div'); head.className = 'vc-tip-head'; head.textContent = geo.when[i]; tip.appendChild(head);
+      geo.names.forEach((nm, si)=>{
+        const v = geo.vals[si][i]; if(v===null) return;
+        const row = document.createElement('div'); row.className = 'vc-tip-row';
+        const key = document.createElement('span'); key.className = 'vc-key'; key.style.background = geo.colors[si];
+        const val = document.createElement('strong'); val.textContent = v + (geo.unit ? ' '+geo.unit : '');
+        const lab = document.createElement('span'); lab.className = 'vc-tip-name'; lab.textContent = nm;
+        row.appendChild(key); row.appendChild(val); row.appendChild(lab); tip.appendChild(row);
+      });
+      const pct = x/geo.W*100;
+      tip.style.left = pct+'%';
+      tip.className = 'vc-tip show' + (pct < 50 ? ' after' : ' before');
+    }
+    function hide(){ cur = -1; cross.style.display='none'; hovs.forEach(h=>{ h.style.display='none'; }); tip.className = 'vc-tip'; }
+    function nearest(clientX){
+      const r = svg.getBoundingClientRect(); const px = (clientX - r.left)/(r.width||1)*geo.W;
+      let best = 0, bd = Infinity; geo.xs.forEach((x,i)=>{ const d = Math.abs(x-px); if(d < bd){ bd = d; best = i; } });
+      return best;
+    }
+    hit.addEventListener('pointermove', e=> show(nearest(e.clientX)));
+    hit.addEventListener('pointerdown', e=> show(nearest(e.clientX)));
+    hit.addEventListener('pointerleave', e=>{ if(e.pointerType === 'mouse') hide(); });
+    hit.addEventListener('focus', ()=> show(cur >= 0 ? cur : geo.xs.length-1));
+    hit.addEventListener('blur', hide);
+    hit.addEventListener('keydown', e=>{
+      const base = cur < 0 ? geo.xs.length-1 : cur;
+      if(e.key === 'ArrowLeft'){ e.preventDefault(); show(Math.max(0, base-1)); }
+      else if(e.key === 'ArrowRight'){ e.preventDefault(); show(Math.min(geo.xs.length-1, base+1)); }
+      else if(e.key === 'Escape'){ hide(); }
+    });
+  });
+
+  // Dashboard: ir directo a las tarjetas pendientes de una materia
+  document.querySelectorAll('[data-action="open-flash"]').forEach(b=> b.onclick=()=>{
+    ui.tab = 'tablero'; ui.openSubjectId = b.dataset.sid; ui.subjectSubtab = 'flash'; render();
+  });
+
+  // Interconsulta (flashcards)
+  document.querySelectorAll('[data-action="new-flash"]').forEach(b=> b.onclick=()=>{ ui.modal={type:'new-flash', sid:b.dataset.sid}; render(); });
+  document.querySelectorAll('[data-action="delete-flash"]').forEach(b=> b.onclick=()=>{
+    ui.modal = {type:'confirm', message:'¿Eliminar esta tarjeta?', run:()=>{
+      const sj = getSubject(b.dataset.sid); sj.flashcards = (sj.flashcards||[]).filter(c=>c.id!==b.dataset.fid); scheduleSave(); showToast_('Tarjeta eliminada');
+    }};
+    render();
+  });
+  document.querySelectorAll('[data-action="start-review"]').forEach(b=> b.onclick=()=>{
+    const sj = getSubject(b.dataset.sid);
+    const practice = b.dataset.mode === 'all';
+    let pool = sj.flashcards || [];
+    if(!practice) pool = pool.filter(isDue);
+    const queue = pool.slice().sort((a,c)=> (c.missed||0)-(a.missed||0) || Math.random()-0.5).map(c=>c.id);
+    if(!queue.length) return;
+    ui.review = {sid:sj.id, queue:queue, i:0, flipped:false, total:queue.length, missed:{}, practice:practice};
+    ui.modal = {type:'review'}; render();
+  });
+  function advanceReview(){
+    const rv = ui.review; rv.i++; rv.flipped = false;
+    if(rv.i >= rv.queue.length){
+      const missedN = Object.keys(rv.missed).length;
+      state.reviews.push({id:uid(), subjectId:rv.sid, date:todayStr(), total:rv.total, known:rv.total-missedN});
+      scheduleSave(false);
+      playChime(); confettiBurst(lastClick.x, lastClick.y);
+    } else { scheduleSave(false); }
+    render();
+  }
+  document.querySelectorAll('[data-action="flip-card"]').forEach(b=> b.onclick=(e)=>{ e.stopPropagation(); ui.review.flipped = true; playBeep(); render(); });
+  document.querySelectorAll('[data-action="grade"]').forEach(b=> b.onclick=()=>{
+    const rv = ui.review; const sj = getSubject(rv.sid);
+    const id = rv.queue[rv.i];
+    const c = (sj.flashcards||[]).find(x=>x.id===id);
+    const g = b.dataset.g;
+    if(c){
+      if(rv.practice){ if(g==='again') c.missed = (c.missed||0)+1; else c.known = (c.known||0)+1; }
+      else gradeCard(c, g);
+    }
+    if(g === 'again'){ rv.missed[id] = true; rv.queue.push(id); }
+    advanceReview();
+  });
+  const flashForm = document.getElementById('flash-form');
+  if(flashForm) flashForm.onsubmit=(e)=>{
+    e.preventDefault();
+    const fd = new FormData(flashForm);
+    const sj = getSubject(ui.modal.sid);
+    if(!Array.isArray(sj.flashcards)) sj.flashcards = [];
+    sj.flashcards.push({id:uid(), front:fd.get('front'), back:fd.get('back'), known:0, missed:0, ease:2.5, reps:0, interval:0, due:null, lastReview:null});
+    scheduleSave(); ui.modal=null; render();
+  };
+
+  const closeBtns = document.querySelectorAll('[data-action="close-modal"]'); closeBtns.forEach(b=> b.onclick=()=>{ ui.modal=null; render(); });
+  const confirmYesBtn = document.querySelector('[data-action="confirm-yes"]');
+  if(confirmYesBtn) confirmYesBtn.onclick = ()=>{ const fn = ui.modal && ui.modal.run; ui.modal=null; if(fn) fn(); render(); };
+  const overlay = document.querySelector('[data-overlay]'); if(overlay) overlay.addEventListener('click', (e)=>{ if(e.target===overlay){ ui.modal=null; render(); } });
+
+  document.querySelectorAll('.color-dot').forEach(d=> d.onclick=()=>{
+    document.querySelectorAll('.color-dot').forEach(x=>x.classList.remove('selected'));
+    d.classList.add('selected');
+    document.querySelector('input[name=color]').value = d.dataset.color;
+  });
+
+  const subjectForm = document.getElementById('subject-form');
+  if(subjectForm) subjectForm.onsubmit = (e)=>{
+    e.preventDefault();
+    const fd = new FormData(subjectForm);
+    if(ui.modal.type==='edit-subject'){
+      const s = getSubject(ui.modal.id); s.name = fd.get('name'); s.color = fd.get('color');
+    } else {
+      state.subjects.push({id:uid(), name:fd.get('name'), color:fd.get('color'), tasks:[], notes:[], flashcards:[]});
+    }
+    scheduleSave(); ui.modal=null; render();
+  };
+
+  const taskForm = document.getElementById('task-form');
+  if(taskForm) taskForm.onsubmit=(e)=>{
+    e.preventDefault();
+    const fd = new FormData(taskForm);
+    const s = getSubject(ui.modal.sid);
+    s.tasks.push({id:uid(), title:fd.get('title'), type:fd.get('type'), priority:fd.get('priority'), dueDate:fd.get('dueDate')||null, done:false, completedDate:null});
+    scheduleSave(); ui.modal=null; render();
+  };
+
+  const noteForm = document.getElementById('note-form');
+  if(noteForm) noteForm.onsubmit=(e)=>{
+    e.preventDefault();
+    const fd = new FormData(noteForm);
+    const s = getSubject(ui.modal.sid);
+    if(ui.modal.type==='edit-note'){
+      const n = s.notes.find(x=>x.id===ui.modal.nid); n.title=fd.get('title'); n.content=fd.get('content');
+    } else {
+      s.notes.push({id:uid(), title:fd.get('title'), content:fd.get('content'), date:todayStr()});
+    }
+    scheduleSave(); ui.modal=null; render();
+  };
+
+  const habitForm = document.getElementById('habit-form');
+  if(habitForm) habitForm.onsubmit=(e)=>{
+    e.preventDefault();
+    const fd = new FormData(habitForm);
+    state.habits.push({id:uid(), name:fd.get('name'), log:{}});
+    scheduleSave(); ui.modal=null; render();
+  };
+
+  const patientForm = document.getElementById('patient-form');
+  if(patientForm) patientForm.onsubmit=(e)=>{
+    e.preventDefault();
+    const fd = new FormData(patientForm);
+    const id = uid();
+    state.patients.push({id, name:fd.get('name'), room:fd.get('room')||'', entries:[]});
+    ui.expandedPatients[id] = true;
+    scheduleSave(); ui.modal=null; render();
+  };
+
+  const vitalsForm = document.getElementById('vitals-form');
+  if(vitalsForm) vitalsForm.onsubmit=(e)=>{
+    e.preventDefault();
+    const fd = new FormData(vitalsForm);
+    const p = getPatient(ui.modal.pid);
+    p.entries.push({
+      id:uid(), date: fd.get('date')||todayStr(), time: fd.get('time')||nowTime(),
+      TA:fd.get('TA')||'', FC:fd.get('FC')||'', FP:fd.get('FP')||'', FR:fd.get('FR')||'',
+      T:fd.get('T')||'', SPO2:fd.get('SPO2')||'', DIURESIS:fd.get('DIURESIS')||''
+    });
+    ui.expandedPatients[p.id] = true;
+    scheduleSave(); ui.modal=null; render();
+  };
+
+  const rondaForm = document.getElementById('ronda-form');
+  if(rondaForm) rondaForm.onsubmit=(e)=>{
+    e.preventDefault();
+    const fd = new FormData(rondaForm);
+    const title = fd.get('title'); const dueDate = fd.get('dueDate'); const taskType = fd.get('type'); const sid = fd.get('subjectId'); const split = fd.get('split');
+    if(split){
+      const turnos = computeSplit(title, dueDate);
+      ui.modal = {type:'confirm-split', turnos, sid, title, taskType};
+      render();
+    } else {
+      const s = getSubject(sid);
+      s.tasks.push({id:uid(), title, type:taskType, priority:'rutina', dueDate, done:false, completedDate:null});
+      scheduleSave(); ui.tab='tablero'; ui.openSubjectId=sid; ui.subjectSubtab='tareas'; render();
+    }
+  };
+
+  const confirmSplitBtn = document.querySelector('[data-action="confirm-split"]');
+  if(confirmSplitBtn) confirmSplitBtn.onclick = ()=>{
+    const {turnos, sid, title, taskType} = ui.modal;
+    const s = getSubject(sid);
+    const nonRepaso = turnos.filter(t=>!t.repaso);
+    const parent = {id:uid(), title, type:taskType, priority:'rutina', dueDate: nonRepaso.length? nonRepaso[nonRepaso.length-1].date : turnos[0].date, done:false, completedDate:null};
+    s.tasks.push(parent);
+    turnos.forEach(t=>{
+      s.tasks.push({id:uid(), title:t.label, type: t.repaso?'repaso':taskType, priority:'rutina', dueDate:t.date, done:false, completedDate:null, parentId:parent.id});
+    });
+    scheduleSave(); ui.modal=null; ui.tab='tablero'; ui.openSubjectId=sid; ui.subjectSubtab='tareas'; render();
+  };
+
+  // pomodoro
+  const startBtn = document.querySelector('[data-action="pomo-start"]');
+  if(startBtn) startBtn.onclick = ()=>{
+    const sel = document.getElementById('pomo-subject'); if(sel) ui.pomo.subjectId = sel.value || null;
+    ui.pomo.running = true;
+    getAudioCtx(); // desbloquea el audio con este clic del usuario
+    ui.pomo.endsAt = Date.now() + ui.pomo.remaining*1000; updatePomoTitle();
+    clearInterval(ui.pomo.intervalId);
+    ui.pomo.intervalId = setInterval(pomoTick, 1000);
+    render();
+  };
+  const pauseBtn = document.querySelector('[data-action="pomo-pause"]');
+  if(pauseBtn) pauseBtn.onclick = ()=>{ ui.pomo.remaining = pomoRemaining(); ui.pomo.running=false; ui.pomo.endsAt=null; clearInterval(ui.pomo.intervalId); updatePomoTitle(); render(); };
+  const resetBtn = document.querySelector('[data-action="pomo-reset"]');
+  if(resetBtn) resetBtn.onclick = ()=>{ ui.pomo.running=false; ui.pomo.endsAt=null; clearInterval(ui.pomo.intervalId); ui.pomo.mode='work'; ui.pomo.remaining=state.pomoSettings.work*60; updatePomoTitle(); render(); };
+  const saveSettingsBtn = document.querySelector('[data-action="pomo-save-settings"]');
+  if(saveSettingsBtn) saveSettingsBtn.onclick = ()=>{
+    const w = parseInt(document.getElementById('pomo-work').value)||50;
+    const b = parseInt(document.getElementById('pomo-brk').value)||10;
+    state.pomoSettings = {work:w, brk:b};
+    if(!ui.pomo.running){ ui.pomo.mode='work'; ui.pomo.remaining = w*60; }
+    scheduleSave(); render();
+  };
+}
+
+function escapeHTML(str){
+  if(str===undefined||str===null) return '';
+  return String(str).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ======================= INIT ======================= */
+render();
+if('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && location.hostname!=='localhost'){ window.addEventListener('load',()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }
+if(Native.isNative && !hasUserData()){
+  Native.readMirror().then(raw=>{
+    if(!raw || hasUserData()) return;
+    try{ const s = sanitizeState(JSON.parse(raw)); if(s.subjects && (s.completedTasksTotal>0 || s.patients.length || s.quickTasks.length || s.subjects.some(sj=>sj.tasks.length||sj.notes.length||sj.flashcards.length))){ state = s; state.lastSeenRankIndex = currentRankIndex(); scheduleSave(false); render(); showToast_('Datos restaurados'); } }catch(e){}
+  });
+}
+</script>
+</body>
+</html>
