@@ -34,7 +34,7 @@ Todo lo técnico ya está hecho en este proyecto. Lo que sigue son los pasos que
    - `ASC_ISSUER_ID` → Issuer ID
    - `ASC_KEY_P8` → pega **todo el contenido** del archivo .p8 (incluidas las líneas BEGIN/END)
 4. (Privacidad) Settings → Pages → Source: *Deploy from a branch* → rama `main`, carpeta `/docs`.
-   Tu política quedará en `https://TU-USUARIO.github.io/NOMBRE-REPO/privacy.html`.
+   Tu política quedará en `https://jf6zy6877j-web.github.io/Round/privacy.html`.
    Pon esa URL en `PRIVACY_URL` dentro de `www/index.html` (así aparece también dentro de la app).
 
 ## 5. Compilar y subir
