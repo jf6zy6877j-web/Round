@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Protocolo Wayne</title>
+<meta name="theme-color" content="#EDF0F3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0D1219" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Wayne">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="stylesheet" href="fonts.css">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{margin:0}
+body{-webkit-text-size-adjust:100%}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<style>
+/* Layout: a training log for one block. Header, 13-day calendar, the selected day's session with machine drawings, then life-outside-the-gym, measurements and the evidence. Single column, max 920px. */
+:root{
+  --bg:#EDF0F3;
+  --surface:#FFFFFF;
+  --plate:#E3E8EE;
+  --ink:#151B24;
+  --muted:#586373;
+  --line:#D2D9E2;
+  --accent:#A86A10;          /* sodium streetlight amber */
+  --accent-ink:#FFFFFF;
+  --accent-soft:#F5E6CB;
+  --figure:#1F2835;
+  --equip:#8693A4;
+  --equip-fill:#CDD5DF;
+  --t-upper:#2F5F8F;
+  --t-lower:#6A4C9C;
+  --t-cardio:#23806A;
+  --t-service:#8D96A2;
+  --done:#23806A;
+  --f-display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --f-body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1219;--surface:#151C26;--plate:#1B2430;--ink:#E5E9EF;--muted:#97A2B1;--line:#26313F;
+    --accent:#E6A53A;--accent-ink:#1A1206;--accent-soft:#3A2B12;--figure:#DDE4EC;--equip:#5F6C7E;--equip-fill:#2A3542;
+    --t-upper:#74A6D8;--t-lower:#AD90DA;--t-cardio:#58C0A5;--t-service:#5E6875;--done:#58C0A5;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1219;--surface:#151C26;--plate:#1B2430;--ink:#E5E9EF;--muted:#97A2B1;--line:#26313F;
+  --accent:#E6A53A;--accent-ink:#1A1206;--accent-soft:#3A2B12;--figure:#DDE4EC;--equip:#5F6C7E;--equip-fill:#2A3542;
+  --t-upper:#74A6D8;--t-lower:#AD90DA;--t-cardio:#58C0A5;--t-service:#5E6875;--done:#58C0A5;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 56px}
+.wrap{max-width:920px;margin:0 auto;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-display);font-weight:800;letter-spacing:.01em;text-wrap:balance;margin:0;line-height:1.02}
+h1{font-size:clamp(3rem,9vw,5.2rem);text-transform:uppercase}
+h2{font-size:clamp(1.9rem,4.6vw,2.5rem);text-transform:uppercase}
+h3{font-size:1.45rem;text-transform:uppercase}
+p{margin:0}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.eyebrow{font-family:var(--f-mono);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:18px}
+.sec-head{display:flex;flex-direction:column;gap:6px;max-width:65ch}
+
+/* header */
+header{display:flex;flex-direction:column;gap:16px}
+.lede{font-size:1.12rem;max-width:58ch}
+.facts{display:flex;flex-wrap:wrap;gap:10px}
+.fact{display:flex;align-items:baseline;gap:8px;padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:.92rem}
+.fact b{font-family:var(--f-display);font-size:1.35rem;line-height:1}
+.rules{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:4px}
+.rule{padding:14px 16px;border-top:3px solid var(--accent);background:var(--surface);border-radius:0 0 8px 8px;display:flex;flex-direction:column;gap:4px}
+.rule strong{font-family:var(--f-display);font-size:1.3rem;text-transform:uppercase;letter-spacing:.02em}
+.rule span{font-size:.92rem;color:var(--muted)}
+
+/* calendar */
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.85rem;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.dow{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.1em;color:var(--muted);text-align:center;text-transform:uppercase}
+.day{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:10px 8px 10px;
+  text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:6px;min-height:92px;position:relative;font:inherit;border-top:5px solid var(--kind)}
+.day:hover{border-color:var(--kind)}
+.day[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);border-top-color:var(--kind)}
+.day .num{font-family:var(--f-display);font-size:1.9rem;line-height:.9}
+.day .lbl{font-size:.8rem;line-height:1.25;color:var(--muted)}
+.day[aria-pressed="true"] .lbl{color:var(--ink)}
+.day.service{background:repeating-linear-gradient(135deg,var(--surface) 0 7px,var(--plate) 7px 9px)}
+.day .tick{position:absolute;top:6px;right:7px;width:18px;height:18px;border-radius:50%;background:var(--done);color:var(--surface);font-size:.7rem;display:grid;place-items:center;font-weight:700}
+.blank{visibility:hidden}
+
+/* session panel */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.panel-head{padding:22px 22px 18px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;border-bottom:1px solid var(--line);border-left:6px solid var(--kind)}
+.panel-head .t{display:flex;flex-direction:column;gap:6px;min-width:0;max-width:60ch}
+.kind-chip{display:inline-flex;align-self:flex-start;font-family:var(--f-mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:4px;background:var(--kind);color:var(--surface)}
+.btn{appearance:none;font:inherit;font-weight:600;font-size:.95rem;border-radius:8px;padding:10px 16px;cursor:pointer;border:1.5px solid var(--accent);background:transparent;color:var(--ink);align-self:flex-start}
+.btn.on{background:var(--done);border-color:var(--done);color:var(--surface)}
+.note{padding:14px 22px;background:var(--plate);font-size:.95rem;display:flex;flex-direction:column;gap:6px}
+.note b{font-weight:700}
+.exlist{list-style:none;margin:0;padding:0}
+.ex{display:grid;grid-template-columns:168px minmax(0,1fr);gap:20px;padding:20px 22px;border-top:1px solid var(--line)}
+.ex:first-child{border-top:0}
+.illus{width:100%;aspect-ratio:160/120;background:var(--plate);border-radius:10px;display:block}
+.fig-cap{font-size:.75rem;color:var(--muted);margin-top:6px;text-align:center;font-family:var(--f-mono)}
+.ex-body{display:flex;flex-direction:column;gap:10px;min-width:0}
+.ex-top{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 14px}
+.ex-name{font-weight:700;font-size:1.12rem}
+.ex-idx{font-family:var(--f-mono);color:var(--muted);font-size:.8rem;margin-right:8px}
+.dose{display:flex;flex-wrap:wrap;gap:8px}
+.dose span{font-family:var(--f-mono);font-size:.82rem;padding:3px 8px;border-radius:4px;border:1px solid var(--line);font-variant-numeric:tabular-nums}
+.dose span.main{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.cues{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px;font-size:.95rem}
+.muscles{font-size:.85rem;color:var(--muted)}
+.why{font-size:.88rem;border-left:3px solid var(--accent);padding-left:10px;color:var(--ink)}
+.log{display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--muted)}
+.log input{width:9rem;max-width:100%;font:inherit;font-family:var(--f-mono);font-size:.9rem;padding:6px 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+
+/* outside the gym */
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px 18px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card .big{font-family:var(--f-display);font-size:2.3rem;line-height:1;font-weight:800}
+.card .big small{font-size:1rem;font-family:var(--f-body);font-weight:600;color:var(--muted);margin-left:4px}
+.field{display:flex;flex-direction:column;gap:4px;font-size:.85rem;color:var(--muted)}
+.field input{font:inherit;font-family:var(--f-mono);font-size:1rem;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);width:100%}
+.row{display:flex;flex-wrap:wrap;gap:12px}
+.row .field{flex:1 1 120px}
+.src{font-size:.8rem;color:var(--muted)}
+
+/* measurements */
+.meas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.delta{font-family:var(--f-display);font-size:2rem;font-weight:800;line-height:1}
+
+/* evidence */
+.ev{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.ev li{display:grid;grid-template-columns:minmax(0,15rem) minmax(0,1fr);gap:18px;padding:16px 0;border-top:1px solid var(--line)}
+.ev li:last-child{border-bottom:1px solid var(--line)}
+.ev .d{font-weight:700}
+.ev .f{display:flex;flex-direction:column;gap:4px;font-size:.95rem}
+.ev .cite{font-size:.82rem;color:var(--muted)}
+.expect{background:var(--ink);color:var(--surface);border-radius:12px;padding:22px;display:flex;flex-direction:column;gap:10px}
+.expect h3{color:var(--accent)}
+.expect p{max-width:65ch}
+footer{font-size:.85rem;color:var(--muted);max-width:65ch}
+
+/* svg drawing */
+.illus .floor{stroke:var(--equip);stroke-width:2;opacity:.7}
+.illus .eq{stroke:var(--equip);stroke-width:4;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.illus .eqf{fill:var(--equip-fill);stroke:var(--equip);stroke-width:2.5}
+.illus .cable{stroke:var(--equip);stroke-width:1.6;stroke-dasharray:1 0}
+.illus .limb{stroke:var(--figure);stroke-width:7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.illus .head{fill:var(--figure)}
+.illus .wt{fill:var(--accent)}
+.illus .wtl{stroke:var(--accent);stroke-width:6;fill:none;stroke-linecap:round}
+.illus .mv{stroke:var(--accent);stroke-width:2.6;fill:none;stroke-dasharray:5 4;stroke-linecap:round}
+.illus .guide{stroke:var(--accent);stroke-width:2;stroke-dasharray:3 5;fill:none}
+.illus text{fill:var(--accent);font-family:var(--f-mono);font-size:10px}
+
+@media (max-width:720px){
+  .rules,.grid2,.meas{grid-template-columns:minmax(0,1fr)}
+  .ev li{grid-template-columns:minmax(0,1fr);gap:6px}
+}
+@media (max-width:560px){
+  .cal{gap:5px}
+  .day{min-height:64px;padding:7px 5px;gap:4px;border-top-width:4px}
+  .day .num{font-size:1.45rem}
+  .day .lbl{font-size:.66rem}
+  .day .tick{width:14px;height:14px;font-size:.6rem;top:4px;right:4px}
+  .ex{grid-template-columns:minmax(0,1fr);gap:12px;padding:18px 16px}
+  .ex .figwrap{max-width:240px}
+  .panel-head{padding:18px 16px}
+  .note{padding:12px 16px}
+}
+@media (prefers-reduced-motion:no-preference){
+  .day{transition:background-color .15s,border-color .15s}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" style="fill:var(--accent)"/>
+    </marker>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">Bloque 1 · 19 al 31 de octubre de 2026</span>
+  <h1>Protocolo Wayne</h1>
+  <p class="lede">Bloque de arranque en Smart Fit para bajar grasa sin perder músculo, armado alrededor de tus días de servicio. Cada decisión de abajo tiene un estudio detrás; están al final de la página.</p>
+  <div class="facts">
+    <span class="fact"><b>8</b> sesiones de fuerza</span>
+    <span class="fact"><b>2</b> de cardio</span>
+    <span class="fact"><b>3</b> días de servicio sin gym</span>
+    <span class="fact"><b>~50</b> min por sesión</span>
+  </div>
+  <div class="rules">
+    <div class="rule"><strong>Fuerza 4 días</strong><span>Cada músculo 2 veces por semana. Es lo que protege el músculo mientras bajas grasa.</span></div>
+    <div class="rule"><strong>Déficit moderado</strong><span>No más de 500 kcal por debajo de tu mantenimiento, con 1.6 g de proteína por kg.</span></div>
+    <div class="rule"><strong>Dormir es parte del plan</strong><span>Con 5.5 h de sueño, solo una fracción del peso perdido es grasa.</span></div>
+  </div>
+</header>
+
+<section aria-labelledby="cal-h">
+  <div class="sec-head">
+    <span class="eyebrow">Calendario</span>
+    <h2 id="cal-h">Toca un día para ver la sesión</h2>
+  </div>
+  <div class="legend">
+    <span><i style="background:var(--t-upper)"></i>Torso</span>
+    <span><i style="background:var(--t-lower)"></i>Piernas y core</span>
+    <span><i style="background:var(--t-cardio)"></i>Cardio</span>
+    <span><i style="background:var(--t-service)"></i>Servicio (sin gym)</span>
+  </div>
+  <div class="cal" id="cal" role="group" aria-label="Días del bloque"></div>
+</section>
+
+<section aria-live="polite">
+  <div class="panel" id="panel"></div>
+</section>
+
+<section aria-labelledby="out-h">
+  <div class="sec-head">
+    <span class="eyebrow">Fuera del gym</span>
+    <h2 id="out-h">Lo que decide el resultado</h2>
+    <p class="muted">El entrenamiento protege el músculo. La grasa se va por el déficit, y el sueño decide qué proporción de lo que pierdes es grasa.</p>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <h3>Proteína diaria</h3>
+      <div class="row">
+        <label class="field" for="kg">Tu peso (kg)
+          <input id="kg" type="number" inputmode="decimal" min="35" max="250" step="0.1" placeholder="Ej. 80">
+        </label>
+      </div>
+      <div class="big mono" id="prot">—<small>g/día</small></div>
+      <p id="prot-note" class="muted">Escribe tu peso y te calculo 1.6 g por kg, repartidos en 3 o 4 comidas.</p>
+      <p class="src">Morton y cols., 2018: por encima de ~1.6 g/kg/día no hubo más ganancia de masa magra.</p>
+    </div>
+    <div class="card">
+      <h3>Ritmo de pérdida</h3>
+      <div class="big mono" id="rate">0.5–0.7<small>% del peso por semana</small></div>
+      <p id="rate-note" class="muted">Con tu peso te digo cuántos kg por semana son.</p>
+      <p>En la práctica: déficit de 300 a 500 kcal al día. Más agresivo frena la ganancia de músculo.</p>
+      <p class="src">Garthe y cols., 2011 · Murphy y Koehler, 2021.</p>
+    </div>
+    <div class="card">
+      <h3>Sueño</h3>
+      <div class="big mono">7+<small>horas</small></div>
+      <p>Sales de casa a las 6 de la mañana, así que la hora de dormir es 10:30 pm como tarde. Los días de servicio llegas tarde: cena lista y directo a la cama.</p>
+      <p class="src">Nedeltcheva y cols., 2010: misma dieta, 5.5 h vs 8.5 h de sueño. Con menos sueño se perdió 55 % menos grasa y 60 % más masa magra.</p>
+    </div>
+    <div class="card">
+      <h3>Pasos</h3>
+      <div class="big mono">8,000+<small>al día</small></div>
+      <p>Cuentan todos: las escaleras del hospital, el trayecto, los pasillos. Es gasto extra que no te cuesta recuperación.</p>
+      <p class="src">Paluch y cols., 2022: en menores de 60 años el beneficio en mortalidad sigue hasta 8,000–10,000 pasos.</p>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="meas-h">
+  <div class="sec-head">
+    <span class="eyebrow">Mediciones · 19 y 31 de octubre</span>
+    <h2 id="meas-h">Cómo vas a saber si funciona</h2>
+    <p class="muted">En ayunas, después de ir al baño, misma báscula. La cintura se mide a la altura del ombligo, al final de una exhalación normal. La cintura es mejor señal de grasa abdominal que el peso solo. Esto se guarda en este navegador.</p>
+  </div>
+  <div class="meas">
+    <div class="card">
+      <h3>Inicio · 19 oct</h3>
+      <label class="field" for="m-sw">Peso (kg)<input id="m-sw" type="number" inputmode="decimal" step="0.1"></label>
+      <label class="field" for="m-sc">Cintura (cm)<input id="m-sc" type="number" inputmode="decimal" step="0.1"></label>
+    </div>
+    <div class="card">
+      <h3>Final · 31 oct</h3>
+      <label class="field" for="m-ew">Peso (kg)<input id="m-ew" type="number" inputmode="decimal" step="0.1"></label>
+      <label class="field" for="m-ec">Cintura (cm)<input id="m-ec" type="number" inputmode="decimal" step="0.1"></label>
+    </div>
+    <div class="card">
+      <h3>Cambio</h3>
+      <div><span class="muted">Peso</span><div class="delta mono" id="d-w">—</div></div>
+      <div><span class="muted">Cintura</span><div class="delta mono" id="d-c">—</div></div>
+    </div>
+  </div>
+  <div class="expect">
+    <h3>Para qué sirve este bloque</h3>
+    <p>Son 13 días para arrancar: aprender las máquinas, encontrar tus pesos y dejar el hábito armado. La señal de que va bien es subir peso o repeticiones de la semana 1 a la semana 2. Cuando termine, vuelves con tus números (pesos usados, peso corporal y cintura) y el plan de noviembre se arma a partir de ahí, con más volumen.</p>
+  </div>
+</section>
+
+<section aria-labelledby="ev-h">
+  <div class="sec-head">
+    <span class="eyebrow">La evidencia</span>
+    <h2 id="ev-h">Por qué el plan es así</h2>
+  </div>
+  <ul class="ev" id="ev"></ul>
+</section>
+
+<footer>
+  Supuestos: entrenas en Smart Fit y no tienes lesiones activas. El equipo cambia de una sede a otra, así que los ejercicios que a veces faltan traen una alternativa. Las cargas no van en kilos porque dependen de ti: se ajustan por repeticiones en reserva. Si una máquina está ocupada o tu gym no la tiene, cambia por el ejercicio que trabaje lo mismo y apunta cuál usaste. Dolor articular agudo, mareo o dolor torácico: paras y lo revisas.
+</footer>
+
+</div>
+
+<script>
+(function(){
+  /* ---------- storage (best effort) ---------- */
+  const store = {
+    get(k){ try{ return localStorage.getItem('wayne:'+k); }catch(e){ return null; } },
+    set(k,v){ try{ if(v===''||v==null) localStorage.removeItem('wayne:'+k); else localStorage.setItem('wayne:'+k,v); }catch(e){} }
+  };
+
+  /* ---------- drawing helpers ---------- */
+  const F = '<line class="floor" x1="6" y1="112" x2="154" y2="112"/>';
+  const L = p => `<polyline class="limb" points="${p}"/>`;
+  const H = (x,y) => `<circle class="head" cx="${x}" cy="${y}" r="7"/>`;
+  const E = (p,w) => `<polyline class="eq" points="${p}"${w?` style="stroke-width:${w}"`:''}/>`;
+  const R = (x,y,w,h) => `<rect class="eqf" x="${x}" y="${y}" width="${w}" height="${h}" rx="2"/>`;
+  const C = (x,y,r) => `<circle class="eq" cx="${x}" cy="${y}" r="${r}"/>`;
+  const W = (x,y,r) => `<circle class="wt" cx="${x}" cy="${y}" r="${r}"/>`;
+  const WL = p => `<polyline class="wtl" points="${p}"/>`;
+  const CB = (x1,y1,x2,y2) => `<line class="cable" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+  const A = d => `<path class="mv" d="${d}" marker-end="url(#arr)"/>`;
+  const T = (x,y,t) => `<text x="${x}" y="${y}">${t}</text>`;
+
+  const DRAW = {
+    chestpress: F+E('40,112 120,112')+E('120,112 120,20',5)+R(42,28,6,52)+R(48,76,34,6)+E('66,82 66,112')+E('120,26 102,50')+
+      H(55,30)+L('55,38 56,74')+L('56,74 82,72 84,108')+L('56,44 78,48 100,50')+W(102,50,4.5)+A('M84 36 L108 36'),
+    pulldown: F+E('30,112 30,6 130,6 130,112')+CB(80,6,80,24)+R(56,82,48,6)+E('80,88 80,112')+WL('40,24 120,24')+
+      H(80,38)+L('80,46 80,80')+L('68,52 92,52')+L('68,52 54,42 50,27')+L('92,52 106,42 110,27')+L('75,80 66,96 66,110')+L('85,80 94,96 94,110')+
+      A('M38 32 L38 52')+A('M122 32 L122 52'),
+    shoulderpress: F+E('110,112 110,6',5)+R(42,24,6,56)+R(48,76,32,6)+E('64,82 64,112')+E('110,14 72,12')+
+      H(55,30)+L('55,38 56,74')+L('56,74 82,72 84,108')+L('56,44 69,32 70,13')+W(70,11,4.5)+A('M88 34 L88 12'),
+    cablerow: F+R(18,92,80,6)+E('26,98 26,112')+E('90,98 90,112')+E('104,80 104,106',5)+E('130,112 130,62',5)+C(130,96,4)+CB(126,96,64,74)+
+      H(46,44)+L('46,52 44,90')+L('44,90 74,78 102,92')+L('47,58 36,70 62,74')+W(64,74,4.5)+A('M104 60 L80 60'),
+    pushdown: F+E('118,112 118,6',5)+C(110,12,4)+CB(110,12,86,70)+
+      H(66,22)+L('66,30 64,66')+L('64,66 66,88 66,110')+L('64,66 70,88 74,110')+L('66,36 68,56 84,72')+WL('78,72 92,70')+A('M102 42 L102 72'),
+    dbcurl: F+H(80,22)+L('80,30 80,66')+L('80,66 78,88 76,110')+L('80,66 82,88 86,110')+L('80,36 80,58 96,46')+W(98,45,5.5)+A('M106 72 Q118 58 108 40'),
+    inclinepress: F+E('50,92 22,58',9)+E('50,92 84,92',9)+E('66,96 66,112')+E('32,72 28,112')+
+      H(24,44)+L('30,51 54,84')+L('54,84 78,78 84,110')+L('33,57 44,42 45,24')+W(45,21,5.5)+A('M62 44 L62 22'),
+    assistedpullup: F+E('38,112 38,8 84,8',5)+E('82,8 82,16')+R(46,98,46,6)+E('38,96 50,100')+
+      H(80,29)+L('76,37 74,70')+L('74,70 74,96 50,98')+L('75,41 63,30 80,16')+A('M102 64 L102 38'),
+    chestrow: F+E('50,86 78,62',9)+E('64,76 64,112')+E('64,100 82,88')+
+      H(76,45)+L('69,52 40,76')+L('40,76 34,94 40,110')+L('66,57 54,68 72,86')+W(74,88,5)+A('M100 98 L86 76'),
+    lateralraise: F+H(80,24)+L('80,32 80,70')+L('70,38 90,38')+L('70,38 52,40 37,42')+L('90,38 108,40 123,42')+W(33,42,5)+W(127,42,5)+
+      L('76,70 74,92 74,110')+L('84,70 86,92 86,110')+A('M30 74 Q20 62 26 52')+A('M130 74 Q140 62 134 52'),
+    facepull: F+E('134,112 134,10',5)+C(128,30,4)+CB(124,30,82,26)+
+      H(62,22)+L('63,30 63,68')+L('63,68 60,90 58,110')+L('63,68 68,90 70,110')+L('64,37 50,30 80,26')+WL('80,20 80,32')+A('M116 16 L90 16'),
+    legpress: E('8,112 148,112',3)+E('56,110 134,32',3)+E('14,70 40,100',9)+E('40,101 58,101',9)+WL('86,42 104,62')+
+      H(18,67)+L('24,76 46,96')+L('46,96 66,70 94,54')+L('27,80 36,92 46,100')+A('M106 82 L124 64'),
+    rdl: F+H(93,44)+L('86,51 56,66')+L('56,66 62,88 60,110')+L('56,66 58,88 54,110')+L('82,54 80,72 78,88')+W(78,92,6)+A('M108 78 Q116 58 102 42'),
+    legcurl: F+E('40,24 40,72',9)+E('40,76 78,76',9)+E('58,80 58,112')+E('62,58 84,58',8)+E('80,66 90,96')+
+      H(50,24)+L('49,32 50,68')+L('50,68 80,67 88,94')+L('50,38 58,52 64,58')+W(92,98,5.5)+A('M108 72 Q112 98 92 110'),
+    legext: F+E('40,24 40,72',9)+E('40,76 78,76',9)+E('58,80 58,112')+E('80,72 104,62')+
+      H(50,24)+L('49,32 50,70')+L('50,70 78,69 102,56')+L('50,38 56,54 58,70')+W(105,60,5.5)+A('M102 98 Q124 88 116 64'),
+    plank: E('14,112 146,112',5)+'<line class="guide" x1="26" y1="72" x2="140" y2="96"/>'+
+      H(32,82)+L('40,86 80,94')+L('80,94 106,100 132,106')+L('44,88 46,108 64,108')+T(98,74,'30–45 s'),
+    goblet: F+H(78,40)+L('74,48 60,82')+L('60,82 90,90 72,110')+L('72,53 82,68 86,58')+WL('89,49 89,66')+A('M116 98 L116 68'),
+    hipthrust: F+R(8,72,32,10)+E('16,82 16,112')+E('34,82 34,112')+
+      H(30,66)+L('38,73 72,70')+L('72,70 96,78 98,110')+L('42,75 56,80 68,66')+W(72,61,7.5)+A('M72 106 L72 86'),
+    captainschair: F+E('36,8 36,112',5)+E('42,26 42,84',9)+E('42,54 84,54',7)+E('84,54 84,112')+
+      H(53,24)+L('52,32 50,74')+L('52,38 54,51 76,51')+L('50,74 78,72 80,98')+A('M102 102 Q108 82 94 70'),
+    farmer: F+H(79,22)+L('78,30 76,66')+L('76,66 86,88 94,110')+L('76,66 70,88 60,108')+L('78,36 78,56 78,74')+
+      W(78,88,8)+'<path class="wtl" style="stroke-width:3.5" d="M72 80 Q78 70 84 80"/>'+A('M104 40 L134 40'),
+    treadmill: F+E('22,104 120,88',8)+E('30,106 30,112')+E('112,92 112,112')+E('118,88 126,40',5)+E('114,38 138,32',7)+E('124,50 98,54')+
+      H(78,18)+L('77,26 74,62')+L('74,62 82,80 86,93')+L('74,62 68,82 60,97')+L('77,32 72,48 82,56')+T(24,92,'8–12 %'),
+    bike: E('30,112 124,112',5)+E('66,92 52,110')+E('66,92 82,110')+E('58,50 66,92')+E('66,92 98,60')+E('98,60 102,42')+E('96,42 110,42')+
+      E('48,48 64,48',6)+C(102,94,14)+C(66,92,3)+
+      H(86,15)+L('80,23 56,44')+L('78,27 90,36 102,42')+L('56,44 80,64 74,98')+L('56,44 72,70 58,86')+A('M44 96 Q48 116 70 110')
+  };
+  const svg = (k,label) => `<svg class="illus" viewBox="0 0 160 120" role="img" aria-label="${label}">${DRAW[k]}</svg>`;
+
+  /* ---------- exercises ---------- */
+  const EX = {
+    chestpress:{n:'Press de pecho en máquina',m:'Máquina de press de pecho sentado',sets:'3 × 8–12',rest:'2 min',mus:'Pecho, tríceps, hombro anterior',
+      cues:['Ajusta el asiento para que las manijas queden a la mitad del pecho.','Escápulas atrás y abajo contra el respaldo.','Baja en 2–3 segundos, sin rebotar.']},
+    pulldown:{n:'Jalón al pecho',m:'Polea alta con barra ancha',sets:'3 × 8–12',rest:'2 min',mus:'Dorsal ancho, bíceps',
+      cues:['Agarre un poco más ancho que los hombros.','Lleva la barra a la clavícula sacando el pecho.','No te balancees hacia atrás para bajarla.']},
+    shoulderpress:{n:'Press de hombro en máquina',m:'Máquina de press militar',sets:'3 × 8–12',rest:'90 s',mus:'Deltoides, tríceps',
+      cues:['Manijas a la altura de los hombros al empezar.','Espalda pegada al respaldo, sin arquear la zona lumbar.','Sube sin bloquear los codos de golpe.']},
+    cablerow:{n:'Remo sentado en polea',m:'Polea baja con manija en V',sets:'3 × 10–12',rest:'90 s',mus:'Espalda media, dorsal, bíceps',
+      cues:['Pecho alto y rodillas un poco flexionadas.','Lleva la manija al ombligo y junta las escápulas 1 segundo.','El torso no se mueve; trabajan los brazos y la espalda.']},
+    pushdown:{n:'Tríceps en polea',m:'Polea alta con barra o cuerda',sets:'2 × 12–15',rest:'biserie',mus:'Tríceps',
+      cues:['Codos pegados a los costados todo el tiempo.','Extiende hasta abajo y aprieta 1 segundo.'],super:'Biserie con el curl: haz una serie de cada uno sin descanso y descansa 60 s al final.'},
+    dbcurl:{n:'Curl con mancuernas',m:'Mancuernas de pie',sets:'2 × 12–15',rest:'60 s',mus:'Bíceps, braquial',
+      cues:['Codos quietos junto al cuerpo.','Sube sin impulso de cadera y baja lento.']},
+    inclinepress:{n:'Press inclinado con mancuernas',m:'Banco inclinado a 30–45°',sets:'3 × 8–12',rest:'2 min',mus:'Pecho superior, hombro anterior, tríceps',
+      cues:['Banco a 30–45°, pies firmes en el piso.','Codos a unos 45° del torso, no abiertos en cruz.','Baja hasta la altura del pecho alto.']},
+    assistedpullup:{n:'Dominadas asistidas',m:'Máquina de dominadas con contrapeso',sets:'3 × 6–10',rest:'2 min',mus:'Dorsal ancho, bíceps, agarre',
+      cues:['Más contrapeso = más ayuda. Elige el que te deje 2–3 reps en reserva.','Baja hasta tener los brazos casi rectos.','Sube hasta que la barbilla pase las manijas.'],
+      goal:'Meta del bloque: quitar contrapeso de la semana 1 a la semana 2. Colgarse de una cornisa empieza aquí.',
+      alt:'Jalón al pecho con agarre neutro o supino, 3 × 8–12.'},
+    chestrow:{n:'Remo con pecho apoyado',m:'Máquina de remo con apoyo de pecho (o T-bar)',sets:'3 × 10–12',rest:'90 s',mus:'Espalda media, deltoides posterior',
+      cues:['El pecho no se despega del apoyo en toda la serie.','Lleva los codos hacia atrás, no hacia afuera.','Pausa de 1 segundo arriba.'],
+      alt:'Remo con mancuerna a una mano, apoyado en el banco, 3 × 10–12 por lado.'},
+    lateralraise:{n:'Elevaciones laterales',m:'Mancuernas ligeras',sets:'3 × 12–20',rest:'60 s',mus:'Deltoides lateral',
+      cues:['Peso ligero: sube hasta la altura de los hombros.','Codos un poco flexionados.','Sin impulso con el torso.']},
+    facepull:{n:'Face pull',m:'Polea a la altura de la cara con cuerda',sets:'2 × 15',rest:'60 s',mus:'Deltoides posterior, manguito rotador, trapecio medio',
+      cues:['Tira hacia la frente separando las manos al final.','Codos altos, a la altura de los hombros.','Contrarresta horas inclinado sobre pacientes y libros.']},
+    legpress:{n:'Prensa de piernas',m:'Prensa inclinada a 45°',sets:'3 × 10–12',rest:'2 min',mus:'Cuádriceps, glúteos',
+      cues:['Pies a la anchura de los hombros, a la mitad de la plataforma.','Baja hasta justo antes de que la pelvis se despegue del respaldo.','Nunca bloquees las rodillas arriba.']},
+    rdl:{n:'Peso muerto rumano',m:'Mancuernas (o barra)',sets:'3 × 8–10',rest:'2 min',mus:'Isquiotibiales, glúteos, espalda baja',
+      cues:['Rodillas un poco flexionadas y fijas.','Lleva la cadera hacia atrás; las mancuernas rozan los muslos.','Baja hasta sentir el estiramiento atrás del muslo, espalda neutra.']},
+    legcurl:{n:'Curl femoral sentado',m:'Máquina de curl femoral sentado (o acostado)',sets:'3 × 10–15',rest:'90 s',mus:'Isquiotibiales',
+      cues:['Alinea la rodilla con el eje de giro de la máquina.','Baja la almohadilla del muslo hasta que quede firme.','La vuelta, lenta: 2–3 segundos.']},
+    legext:{n:'Extensión de cuádriceps',m:'Máquina de extensión de piernas',sets:'2 × 12–15',rest:'60 s',mus:'Cuádriceps',
+      cues:['Rodilla alineada con el eje de la máquina.','Arriba, aprieta 1 segundo.','Baja controlado, sin dejar caer el peso.']},
+    plank:{n:'Plancha',m:'Colchoneta',sets:'3 × 30–45 s',rest:'60 s',mus:'Core completo',
+      cues:['Codos debajo de los hombros.','Aprieta glúteos y abdomen: línea recta de cabeza a talones.','La serie termina cuando la cadera se cae.']},
+    goblet:{n:'Sentadilla goblet',m:'Una mancuerna sostenida al pecho',sets:'3 × 8–12',rest:'2 min',mus:'Cuádriceps, glúteos, core',
+      cues:['Mancuerna pegada al pecho, codos hacia abajo.','Baja entre las piernas con el torso alto.','Rodillas en la dirección de la punta de los pies.']},
+    hipthrust:{n:'Hip thrust',m:'Banco + barra o máquina de hip thrust',sets:'3 × 8–12',rest:'2 min',mus:'Glúteos, isquiotibiales',
+      cues:['Borde del banco justo bajo las escápulas.','Mentón al pecho; sube hasta que el torso quede horizontal.','Aprieta glúteos 1 segundo arriba.'],
+      alt:'Hip thrust en la máquina Smith con un banco detrás, o puente de glúteo en el piso con una mancuerna sobre la cadera.'},
+    captainschair:{n:'Elevación de rodillas',m:'Silla romana (captain’s chair)',sets:'3 × 10–15',rest:'60 s',mus:'Abdomen, flexores de cadera',
+      cues:['Espalda pegada al respaldo.','Sube las rodillas y enrolla un poco la pelvis.','Baja lento, sin balanceo.'],
+      alt:'Elevación de rodillas colgado de la barra de dominadas, o crunch inverso acostado en un banco.'},
+    farmer:{n:'Paseo del granjero',m:'Dos mancuernas o kettlebells pesadas',sets:'3 × 30–40 m',rest:'90 s',mus:'Agarre, trapecio, core',
+      cues:['Pesado, pero con postura perfecta.','Hombros atrás, pasos cortos y firmes.','El agarre es de las cualidades más "Wayne" que puedes entrenar.'],
+      alt:'Si no hay espacio para caminar: sostén las mancuernas de pie, quieto, 30–45 s por serie.'},
+    bike:{n:'Intervalos en bicicleta',m:'Bicicleta estática',sets:'6 × 30 s / 90 s',rest:'≈17 min total',mus:'Sistema cardiovascular',
+      cues:['5 min suaves para calentar.','"Fuerte" = 8–9 de 10 de esfuerzo durante 30 s.','"Suave" = pedaleo ligero 90 s hasta recuperar el aire.'],
+      why:'Bici y no carrera: en el metaanálisis de Wilson (2012), correr junto a pesas restó fuerza e hipertrofia y la bici no.'},
+    treadmill:{n:'Caminata en cinta inclinada',m:'Cinta de correr',sets:'20–25 min',rest:'zona 2',mus:'Sistema cardiovascular',
+      cues:['Inclinación 8–12 %, velocidad 4.5–5.5 km/h.','Zona 2: puedes hablar en frases completas, pero no cantar.','Sin agarrarte del pasamanos.']}
+  };
+
+  /* ---------- sessions ---------- */
+  const S = {
+    upperA:{name:'Torso A',kind:'upper',dur:'≈50 min',focus:'Empuje y jalón con máquinas',ex:['chestpress','pulldown','shoulderpress','cablerow','pushdown','dbcurl']},
+    upperB:{name:'Torso B',kind:'upper',dur:'≈50 min',focus:'Pecho alto, dominadas y hombro',ex:['inclinepress','assistedpullup','chestrow','lateralraise','facepull']},
+    lowerA:{name:'Piernas A',kind:'lower',dur:'≈50 min',focus:'Prensa, bisagra de cadera y core',ex:['legpress','rdl','legcurl','legext','plank']},
+    lowerB:{name:'Piernas B',kind:'lower',dur:'≈50 min',focus:'Sentadilla, glúteos, agarre y core',ex:['goblet','hipthrust','legcurl','captainschair','farmer']},
+    cardio:{name:'Cardio',kind:'cardio',dur:'≈40 min',focus:'Intervalos cortos + zona 2',ex:['bike','treadmill']},
+    service:{name:'Servicio',kind:'service'}
+  };
+  const SERVICE_NOTE = {
+    20:'Martes: entrega de guardia a las 7:00, servicio hasta las 8 pm.',
+    25:'Domingo: llegas a las 7:30, servicio hasta las 8 pm.',
+    30:'Viernes: entrega de guardia a las 7:00, servicio hasta las 8 pm.'
+  };
+  const PLAN = [
+    {d:19,s:'upperA',extra:'Hoy también: mediciones iniciales (peso y cintura) antes de desayunar.'},
+    {d:20,s:'service'},
+    {d:21,s:'lowerA'},
+    {d:22,s:'upperB'},
+    {d:23,s:'cardio'},
+    {d:24,s:'lowerB',extra:'Sábado libre: entrena en la mañana y aprovecha para cocinar proteína de la semana.'},
+    {d:25,s:'service'},
+    {d:26,s:'upperA'},
+    {d:27,s:'lowerA'},
+    {d:28,s:'cardio'},
+    {d:29,s:'upperB'},
+    {d:30,s:'service'},
+    {d:31,s:'lowerB',extra:'Cierre del bloque: mediciones finales en la mañana y compara tu registro de pesos con la semana 1.'}
+  ];
+  const DOW = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const DOWL = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const dowOf = d => new Date(2026,9,d).getDay();
+  const kindVar = k => `var(--t-${k})`;
+
+  /* ---------- calendar ---------- */
+  const cal = document.getElementById('cal');
+  let selected = 19;
+  (function pickToday(){
+    const t = new Date();
+    if(t.getFullYear()===2026 && t.getMonth()===9 && t.getDate()>=19 && t.getDate()<=31) selected = t.getDate();
+  })();
+
+  function renderCal(){
+    let h = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].map(x=>`<div class="dow">${x}</div>`).join('');
+    PLAN.forEach(p=>{
+      const s = S[p.s];
+      const done = store.get('done:'+p.d)==='1';
+      h += `<button type="button" class="day ${s.kind==='service'?'service':''}" style="--kind:${kindVar(s.kind)}" data-d="${p.d}" aria-pressed="${p.d===selected}"
+        aria-label="${DOWL[dowOf(p.d)]} ${p.d}: ${s.name}${done?' (hecho)':''}">
+        <span class="num">${p.d}</span><span class="lbl">${s.name}</span>${done?'<span class="tick" aria-hidden="true">✓</span>':''}</button>`;
+    });
+    h += '<div class="day blank" aria-hidden="true"></div>';
+    cal.innerHTML = h;
+  }
+  cal.addEventListener('click', e=>{
+    const b = e.target.closest('.day[data-d]'); if(!b) return;
+    selected = +b.dataset.d; renderCal(); renderPanel();
+    document.getElementById('panel').scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth', block:'start'});
+  });
+
+  /* ---------- session panel ---------- */
+  const panel = document.getElementById('panel');
+  const esc = s => String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  function renderPanel(){
+    const p = PLAN.find(x=>x.d===selected), s = S[p.s];
+    const week = p.d<=25 ? 1 : 2;
+    const done = store.get('done:'+p.d)==='1';
+    const title = `${DOWL[dowOf(p.d)]} ${p.d} de octubre`;
+    panel.style.setProperty('--kind', kindVar(s.kind));
+
+    if(s.kind==='service'){
+      panel.innerHTML = `
+        <div class="panel-head"><div class="t"><span class="kind-chip">Servicio · sin gym</span><h3>${title}</h3>
+          <p class="muted">${SERVICE_NOTE[p.d]}</p></div></div>
+        <div class="note">
+          <p><b>Hoy el trabajo es recuperarte.</b> Doce horas de hospital ya son actividad, y meter gym después te quita sueño, que es lo que más protege tu músculo en déficit.</p>
+          <p><b>Pasos:</b> 8,000 o más. Escaleras en vez de ascensor cuando puedas.</p>
+          <p><b>Comida:</b> lleva algo con proteína para el break de 12 a 2 y otra cosa para la tarde. Llegar con hambre a las 9 pm es donde se rompe el déficit.</p>
+          <p><b>Sueño:</b> cena rápida y a la cama. Mañana sí entrenas.</p>
+        </div>`;
+      return;
+    }
+
+    const rirTxt = week===1
+      ? '<b>Semana 1 · 3 repeticiones en reserva.</b> Termina cada serie cuando podrías hacer 3 más con buena técnica. Hoy estás aprendiendo la máquina y encontrando tu peso.'
+      : '<b>Semana 2 · 1–2 repeticiones en reserva.</b> Si en la semana 1 llegaste al tope del rango en todas las series, sube el peso al siguiente escalón. Si no, busca una repetición más.';
+    const warm = s.kind==='cardio'
+      ? '<b>Orden:</b> intervalos primero, cuando estás fresco; la caminata después.'
+      : '<b>Calentamiento:</b> 5 min de bici suave y 1–2 series ligeras (≈50 % del peso) del primer ejercicio.';
+
+    let list = '';
+    s.ex.forEach((k,i)=>{
+      const x = EX[k];
+      const id = `w-${p.d}-${k}`;
+      const val = store.get(id) || '';
+      list += `<li class="ex">
+        <div class="figwrap">${svg(k, 'Ilustración: '+x.m)}<div class="fig-cap">${esc(x.m)}</div></div>
+        <div class="ex-body">
+          <div class="ex-top"><span class="ex-name"><span class="ex-idx">${String(i+1).padStart(2,'0')}</span>${esc(x.n)}</span></div>
+          <div class="dose"><span class="main">${x.sets}</span><span>descanso ${x.rest}</span></div>
+          <ul class="cues">${x.cues.map(c=>`<li>${esc(c)}</li>`).join('')}</ul>
+          <p class="muscles">Trabaja: ${esc(x.mus)}</p>
+          ${x.super?`<p class="why">${esc(x.super)}</p>`:''}
+          ${x.goal?`<p class="why">${esc(x.goal)}</p>`:''}
+          ${x.why?`<p class="why">${esc(x.why)}</p>`:''}
+          ${x.alt?`<p class="muscles"><b>Si tu Smart Fit no la tiene:</b> ${esc(x.alt)}</p>`:''}
+          ${s.kind!=='cardio'?`<label class="log" for="${id}">Peso usado <input id="${id}" data-k="${id}" type="text" inputmode="decimal" placeholder="ej. 40 kg" value="${esc(val)}"></label>`:''}
+        </div></li>`;
+    });
+
+    panel.innerHTML = `
+      <div class="panel-head">
+        <div class="t"><span class="kind-chip">${s.name} · ${s.dur}</span><h3>${title}</h3><p class="muted">${s.focus}.${p.extra?' '+p.extra:''}</p></div>
+        <button type="button" class="btn ${done?'on':''}" id="done-btn" aria-pressed="${done}">${done?'Sesión hecha ✓':'Marcar como hecha'}</button>
+      </div>
+      <div class="note"><p>${rirTxt}</p><p>${warm}</p></div>
+      <ul class="exlist">${list}</ul>`;
+
+    document.getElementById('done-btn').addEventListener('click', ()=>{
+      const now = store.get('done:'+p.d)==='1';
+      store.set('done:'+p.d, now?'':'1');
+      renderCal(); renderPanel();
+    });
+    panel.querySelectorAll('input[data-k]').forEach(inp=>{
+      inp.addEventListener('input', ()=>store.set(inp.dataset.k, inp.value.trim()));
+    });
+  }
+
+  /* ---------- calculators ---------- */
+  const kg = document.getElementById('kg');
+  function calc(){
+    const v = parseFloat(kg.value);
+    const prot = document.getElementById('prot'), pn = document.getElementById('prot-note');
+    const rn = document.getElementById('rate-note');
+    if(!(v>=35 && v<=250)){
+      prot.innerHTML='—<small>g/día</small>';
+      pn.textContent='Escribe tu peso y te calculo 1.6 g por kg, repartidos en 3 o 4 comidas.';
+      rn.textContent='Con tu peso te digo cuántos kg por semana son.';
+      return;
+    }
+    const g = Math.round(v*1.6);
+    prot.innerHTML = `${g}<small>g/día</small>`;
+    pn.textContent = `Unos ${Math.round(g/4)}–${Math.round(g/3)} g por comida. Pollo, huevos, pescado, habichuelas con arroz, yogur griego y queso suman rápido.`;
+    rn.textContent = `Para ti: ${(v*0.005).toFixed(1)}–${(v*0.007).toFixed(1)} kg por semana.`;
+  }
+  kg.value = store.get('kg') || '';
+  kg.addEventListener('input', ()=>{ store.set('kg', kg.value); calc(); });
+  calc();
+
+  const M = ['m-sw','m-sc','m-ew','m-ec'];
+  function delta(){
+    const n = id => parseFloat(document.getElementById(id).value);
+    const f = (a,b,u) => (isFinite(a)&&isFinite(b)) ? `${(b-a)>0?'+':''}${(b-a).toFixed(1)} ${u}` : '—';
+    document.getElementById('d-w').textContent = f(n('m-sw'),n('m-ew'),'kg');
+    document.getElementById('d-c').textContent = f(n('m-sc'),n('m-ec'),'cm');
+  }
+  M.forEach(id=>{
+    const el = document.getElementById(id);
+    el.value = store.get(id) || '';
+    el.addEventListener('input', ()=>{ store.set(id, el.value); delta(); });
+  });
+  delta();
+
+  /* ---------- evidence ---------- */
+  const EV = [
+    ['Cada músculo 2 veces por semana','Con el volumen igualado, entrenar un músculo dos veces por semana dio más hipertrofia que una vez.','Schoenfeld, Ogborn y Krieger · Sports Med 2016','10.1007/s40279-016-0543-8'],
+    ['Series semanales moderadas, que suben','Relación dosis-respuesta: cada serie semanal extra suma un poco de crecimiento. Empezamos en 6–12 series por músculo porque estás en déficit y aprendiendo las máquinas; en noviembre se sube.','Schoenfeld, Ogborn y Krieger · J Sports Sci 2017','10.1080/02640414.2016.1210197'],
+    ['Repeticiones en reserva, no fallo','Llegar al fallo no fue superior a quedarse cerca. Otro análisis encontró que terminar más cerca del fallo sí favorece la hipertrofia. Por eso 3 reps en reserva al aprender y 1–2 en la semana 2.','Refalo y cols. · Sports Med 2023 · Robinson y cols. · Sports Med 2024','10.1007/s40279-022-01784-y','10.1007/s40279-024-02069-2'],
+    ['Máquinas sin culpa','En comparación directa, peso libre y máquinas dieron la misma hipertrofia y fuerza. Las máquinas son más fáciles de aprender y más seguras cuando llegas cansado del hospital.','Haugen y cols. · BMC Sports Sci Med Rehabil 2023','10.1186/s13102-023-00713-4'],
+    ['Bici para los intervalos','Combinar pesas con correr restó hipertrofia y fuerza; combinarlas con bici, no.','Wilson y cols. · J Strength Cond Res 2012','10.1519/JSC.0b013e31823a3e2d'],
+    ['Intervalos + cardio continuo','Ambos bajaron el porcentaje de grasa por igual. Los intervalos lograron más pérdida de grasa en kg (28.5 %) en menos tiempo. Por eso la sesión de cardio usa los dos.','Viana y cols. · Br J Sports Med 2019','10.1136/bjsports-2018-099928'],
+    ['Déficit de 500 kcal como máximo','Entrenando fuerza en déficit, alrededor de 500 kcal/día de déficit ya impidió ganar masa magra.','Murphy y Koehler · Scand J Med Sci Sports 2021','10.1111/sms.14075'],
+    ['Bajar 0.5–0.7 % por semana','Atletas que bajaron 0.7 %/semana ganaron masa magra; los que bajaron 1.4 %/semana no.','Garthe y cols. · Int J Sport Nutr Exerc Metab 2011','10.1123/ijsnem.21.2.97'],
+    ['1.6 g de proteína por kg','Metaanálisis de 49 estudios: más allá de ~1.6 g/kg/día no hubo más ganancia de masa magra.','Morton y cols. · Br J Sports Med 2018','10.1136/bjsports-2017-097608'],
+    ['Dormir 7 horas o más','Misma dieta, 5.5 h vs 8.5 h de sueño: con menos sueño se perdió 55 % menos grasa y 60 % más masa magra.','Nedeltcheva y cols. · Ann Intern Med 2010','10.7326/0003-4819-153-7-201010050-00006'],
+    ['8,000+ pasos al día','En 47,471 adultos, más pasos se asoció a menor mortalidad hasta 8,000–10,000 pasos en menores de 60.','Paluch y cols. · Lancet Public Health 2022','10.1016/S2468-2667(21)00302-9'],
+    ['Sin 200 abdominales','La grasa visceral bajó con todo tipo de ejercicio (aeróbico, fuerza, combinado e intervalos), no con un ejercicio localizado. El core aquí es para fuerza y postura, no para "quemar" barriga.','Chen y cols. · Obesity Reviews 2024 (84 ensayos)','10.1111/obr.13666']
+  ];
+  document.getElementById('ev').innerHTML = EV.map(e=>{
+    const dois = e.slice(3).map(d=>`<a href="https://doi.org/${d}" target="_blank" rel="noopener">doi:${d}</a>`).join(' · ');
+    return `<li><div class="d">${esc(e[0])}</div><div class="f"><p>${esc(e[1])}</p><p class="cite">${esc(e[2])} · ${dois}</p></div></li>`;
+  }).join('');
+
+  renderCal(); renderPanel();
+})();
+</script>
+
+<script>
+if('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && location.hostname!=='localhost'){
+  window.addEventListener('load',()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); });
+}
+</script>
+</body>
+</html>
